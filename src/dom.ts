@@ -3,13 +3,16 @@
  *
  * @param  {string} tagName           - new Element tag name
  * @param  {Array|string} classNames  - list or name of CSS classname(s)
+ * @param  {object} properties        - any properties
  * @param  {object} attributes        - any attributes
  * @returns {Element}
  */
 export function make<E extends HTMLElement = HTMLElement>(
     tagName: string,
     classNames: string | string[] = '',
-    attributes: Partial<E> = {}
+    properties: Partial<E> = {},
+    attributes: Record<string, string> = {},
+
 ): E {
     const el = document.createElement(tagName) as E;
 
@@ -19,13 +22,13 @@ export function make<E extends HTMLElement = HTMLElement>(
         el.classList.add(classNames);
     }
 
-    for (const attrName in attributes) {
-        if (!Object.prototype.hasOwnProperty.call(attributes, attrName)) {
-            continue;
-        }
+    Object.entries(properties).forEach(([propName, value]) => {
+        el[propName] = value;
+    });
 
-        el[attrName] = attributes[attrName]!;
-    }
+    Object.entries(attributes).forEach(([attrName, value]) => {
+        el.setAttribute(attrName, value);
+    });
 
     return el;
 }
