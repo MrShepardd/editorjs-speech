@@ -8,27 +8,26 @@
  * @returns {Element}
  */
 export function make<E extends HTMLElement = HTMLElement>(
-    tagName: string,
-    classNames: string | string[] = '',
-    properties: Partial<E> = {},
-    attributes: Record<string, string> = {},
-
+  tagName: string,
+  classNames: string | string[] = '',
+  properties: Partial<E> = {},
+  attributes: Record<string, string> = {}
 ): E {
-    const el = document.createElement(tagName) as E;
+  const el = document.createElement(tagName) as E;
 
-    if (Array.isArray(classNames)) {
-        el.classList.add(...classNames);
-    } else if (classNames) {
-        el.classList.add(classNames);
-    }
+  if (Array.isArray(classNames)) {
+    el.classList.add(...classNames);
+  } else if (classNames) {
+    el.classList.add(classNames);
+  }
 
-    Object.entries(properties).forEach(([propName, value]) => {
-        el[propName] = value;
-    });
+  Object.entries(properties).forEach(([propName, value]) => {
+    el[propName as keyof typeof el] = value;
+  });
 
-    Object.entries(attributes).forEach(([attrName, value]) => {
-        el.setAttribute(attrName, value);
-    });
+  Object.entries(attributes).forEach(([attrName, value]) => {
+    el.setAttribute(attrName, value);
+  });
 
-    return el;
+  return el;
 }
