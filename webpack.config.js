@@ -20,13 +20,7 @@ module.exports = {
         test: /\.(css|pcss)$/,
         use: [
           'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              modules: true,
-              importLoaders: 1
-            }
-          },
+          'css-loader',
           {
             loader: 'postcss-loader',
             options: {

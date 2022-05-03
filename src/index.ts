@@ -1,3 +1,8 @@
+/**
+ * Build styles
+ */
+require('./index.css').toString();
+
 import { API, BlockTool } from '@editorjs/editorjs';
 import { make } from './dom';
 
