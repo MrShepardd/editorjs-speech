@@ -34,6 +34,24 @@ export interface SpeechData {
  */
 export default class Speech implements BlockTool {
   /**
+   * Default placeholder for Paragraph Tool
+   *
+   * @return {SpeechData}
+   * @constructor
+   */
+  static get DEFAULT_SPEECH(): SpeechData {
+    return {
+      timestamp: 0.0,
+      speaker: 'Unknown Speaker',
+      text: [{
+        start: 0.0,
+        end: 0.0,
+        word: ' ',
+      }],
+    };
+  }
+
+  /**
    * Notify core that read-only mode is supported
    */
   public static isReadOnlySupported = true;
@@ -41,7 +59,7 @@ export default class Speech implements BlockTool {
   /**
    * Allow to use native Enter behaviour
    */
-  public static enableLineBreaks = true;
+  public static enableLineBreaks = false;
 
   /**
    * Data passed on render
@@ -96,13 +114,9 @@ export default class Speech implements BlockTool {
     this.api = api;
     this.readOnly = readOnly || false;
 
-    this._data = {
-      timestamp: 0,
-      speaker: '',
-      text: [],
-    };
+    this._data = Speech.DEFAULT_SPEECH;
 
-    this.data = data || this._data;
+    this.data = !!data?.speaker ? data : this._data;
   }
 
   /**
@@ -260,6 +274,18 @@ export default class Speech implements BlockTool {
     }
 
     return this._data;
+  }
+
+  /**
+   * Icon and title for displaying at the Toolbox
+   *
+   * @return {{icon: string, title: string}}
+   */
+  static get toolbox(): { icon: string; title: string } {
+    return {
+      icon: require('./toolbox-icon.svg').default,
+      title: 'Speech'
+    };
   }
 
   /**
