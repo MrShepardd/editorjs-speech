@@ -1,5 +1,5 @@
 {
-  "name": "@editorjs/speech",
+  "name": "editorjs-speech",
   "version": "1.0.0",
   "keywords": [
     "codex editor",
@@ -19,7 +19,6 @@
     "lint": "eslint src/ --ext .ts",
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development --watch",
-    "publish": "npm publish",
     "release:patch": "standard-version --release-as patch && git push --follow-tags origin dev && npm publish",
     "release:minor": "standard-version --release-as minor && git push --follow-tags origin dev && npm publish",
     "release:major": "standard-version --release-as major && git push --follow-tags origin dev && npm publish",
@@ -42,10 +41,7 @@
       }
     ]
   },
-  "author": {
-    "name": "MrShepardd",
-    "email": "travinkosty@mail.ru"
-  },
+  "author": "MrShepardd <travinkosty@mail.ru>",
   "devDependencies": {
     "@babel/core": "^7.13.16",
     "@babel/preset-env": "^7.13.15",
@@ -71,9 +67,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/MrShepardd/editorjs-speech"
+    "url": "git+https://github.com/MrShepardd/editorjs-speech.git"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
-  }
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/MrShepardd/editorjs-speech/issues"
+  },
+  "homepage": "https://github.com/MrShepardd/editorjs-speech#readme",
+  "dependencies": {}
 }
