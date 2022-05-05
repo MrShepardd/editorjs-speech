@@ -1,4 +1,11 @@
 .idea/
 assets/
+src/
+.babelrc
+.eslintrc
+.git
+.gitignore
+.prettierrc
+CHANGELOG.md
+tsconfig.json
 webpack.config.js
-yarn.lock

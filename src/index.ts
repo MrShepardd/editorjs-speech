@@ -5,29 +5,8 @@ require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
 import { make } from './dom';
+import { SpeechData } from '../types';
 
-interface TextData {
-  start: number;
-  end: number;
-  word: string;
-}
-
-export interface SpeechData {
-  /**
-   * Speaker name
-   */
-  speaker: string;
-
-  /**
-   * Timestamp of speech
-   */
-  timestamp: number;
-
-  /**
-   * Note's superscript index
-   */
-  text: TextData[];
-}
 
 /**
  * Speech tool implements of Editor.JS Block
@@ -36,18 +15,20 @@ export default class Speech implements BlockTool {
   /**
    * Default placeholder for Paragraph Tool
    *
-   * @return {SpeechData}
-   * @constructor
+   * @returns {SpeechData}
+   * @static
    */
   static get DEFAULT_SPEECH(): SpeechData {
     return {
       timestamp: 0.0,
       speaker: 'Unknown Speaker',
-      text: [{
-        start: 0.0,
-        end: 0.0,
-        word: ' ',
-      }],
+      text: [
+        {
+          start: 0.0,
+          end: 0.0,
+          word: ' ',
+        },
+      ],
     };
   }
 
@@ -279,12 +260,12 @@ export default class Speech implements BlockTool {
   /**
    * Icon and title for displaying at the Toolbox
    *
-   * @return {{icon: string, title: string}}
+   * @returns {{icon: string, title: string}}
    */
   static get toolbox(): { icon: string; title: string } {
     return {
       icon: require('./toolbox-icon.svg').default,
-      title: 'Speech'
+      title: 'Speech',
     };
   }
 

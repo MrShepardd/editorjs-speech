@@ -11,10 +11,7 @@
   "description": "Speech Block Tool for Editor.js",
   "license": "MIT",
   "main": "dist/bundle.js",
-  "types": "src/index.ts",
-  "files": [
-    "dist"
-  ],
+  "types": "types/index.d.ts",
   "scripts": {
     "lint": "eslint src/ --ext .ts",
     "build": "webpack --mode production",
