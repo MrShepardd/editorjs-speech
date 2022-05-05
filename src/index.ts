@@ -29,11 +29,6 @@ export interface SpeechData {
   text: TextData[];
 }
 
-export interface SpeechConfig {
-  placeholder?: string;
-  shortcut?: string;
-}
-
 /**
  * Speech tool implements of Editor.JS Block
  */
