@@ -5,39 +5,34 @@ require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
 import { make } from './dom';
+import { SpeechData } from '../types';
 
-interface TextData {
-  start: number;
-  end: number;
-  word: string;
-}
-
-export interface SpeechData {
-  /**
-   * Speaker name
-   */
-  speaker: string;
-
-  /**
-   * Timestamp of speech
-   */
-  timestamp: number;
-
-  /**
-   * Note's superscript index
-   */
-  text: TextData[];
-}
-
-export interface SpeechConfig {
-  placeholder?: string;
-  shortcut?: string;
-}
 
 /**
  * Speech tool implements of Editor.JS Block
  */
 export default class Speech implements BlockTool {
+  /**
+   * Default placeholder for Paragraph Tool
+   * ### TODO: **Set caret position to first word in new speech instead using empty object in text**
+   *
+   * @returns {SpeechData}
+   * @static
+   */
+  static get DEFAULT_SPEECH(): SpeechData {
+    return {
+      timestamp: 0.0,
+      speaker: 'Unknown Speaker',
+      text: [
+        {
+          start: 0.0,
+          end: 0.0,
+          word: '',
+        },
+      ],
+    };
+  }
+
   /**
    * Notify core that read-only mode is supported
    */
@@ -46,7 +41,7 @@ export default class Speech implements BlockTool {
   /**
    * Allow to use native Enter behaviour
    */
-  public static enableLineBreaks = true;
+  public static enableLineBreaks = false;
 
   /**
    * Data passed on render
@@ -66,7 +61,7 @@ export default class Speech implements BlockTool {
   private readonly readOnly: boolean;
 
   /**
-   * Tune's wrapper for tools' content
+   * Wrapper for tools' content
    */
   private wrapper!: HTMLElement;
 
@@ -101,12 +96,7 @@ export default class Speech implements BlockTool {
     this.api = api;
     this.readOnly = readOnly || false;
 
-    this._data = {
-      timestamp: 0,
-      speaker: '',
-      text: [],
-    };
-
+    this._data = Speech.DEFAULT_SPEECH;
     this.data = data || this._data;
   }
 
@@ -120,28 +110,33 @@ export default class Speech implements BlockTool {
     this.wrapper = make('div', [this.CSS.baseBlock, this.CSS.speech], {
       contentEditable: String(!this.readOnly),
     });
-    this.wrapper.appendChild(this.makeTimestampTag());
     this.wrapper.appendChild(this.makeSpeechTag());
+    this.wrapper.appendChild(this.makeTimestampTag());
 
     if (!this.readOnly) {
       // detect keydown on the last item to escape List
       this.wrapper.addEventListener(
         'keydown',
         event => {
-          const [ENTER, BACKSPACE] = ['Enter', 'Backspace']; // key names
+          const [ENTER, BACKSPACE, A] = [13, 8, 65]; // key names
+          const cmdPressed = event.ctrlKey || event.metaKey;
 
-          switch (event.key) {
+          switch (event.keyCode) {
             case ENTER:
               this.stopEvent(event);
               break;
             case BACKSPACE:
               this.backspace(event);
               break;
+            case A:
+              if (cmdPressed) {
+                this.selectItem(event);
+              }
+              break;
             default:
               break;
           }
-        },
-        false
+        }
       );
     }
 
@@ -165,6 +160,29 @@ export default class Speech implements BlockTool {
   }
 
   /**
+   * Select speech content by CMD+A
+   *
+   * @param {KeyboardEvent} event - KeyboardEvent on Cmd + A pressed
+   */
+  public selectItem(event: KeyboardEvent): void {
+    event.preventDefault();
+
+    const selection = window.getSelection();
+    const currentNode = selection?.anchorNode?.parentNode;
+
+    if (selection && currentNode) {
+      const currentItem = (currentNode as Element).closest('.' + this.CSS.speechContent);
+      const defaultItem = document.createElement('div');
+
+      const range = new Range();
+
+      range.selectNodeContents(currentItem || defaultItem);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
+  /**
    * Returns timestamp element for speech
    *
    * @returns {HTMLElement}
@@ -173,17 +191,13 @@ export default class Speech implements BlockTool {
     const speechTimestamp = make('p', this.CSS.speechTimestamp, {
       contentEditable: 'false',
     });
-    const speechTimestampContent = make('span', this.CSS.timestampContent);
-    const timestamp = make('span', '', {
-      innerHTML: this._data.timestamp.toString(),
-    });
-    const speakerName = make('strong', this.CSS.speakerName, {
-      innerHTML: this._data.speaker,
-    });
 
-    speechTimestampContent.appendChild(speakerName);
-    speechTimestampContent.appendChild(timestamp);
-    speechTimestamp.appendChild(speechTimestampContent);
+    speechTimestamp.appendChild(
+      make('span', this.CSS.timestampContent, {}, {
+        'data-speaker': this._data.speaker,
+        'data-timestamp': this._data.timestamp.toString(),
+      })
+    );
 
     return speechTimestamp;
   }
@@ -198,7 +212,7 @@ export default class Speech implements BlockTool {
 
     if (this._data.text.length) {
       this._data.text.forEach(item => {
-        const domProps = { innerHTML: item.word };
+        const domProps = { innerHTML: `${item.word} ` };
         const attributes = {
           'data-start': item.start.toString(),
           'data-end': item.end.toString(),
@@ -221,19 +235,9 @@ export default class Speech implements BlockTool {
    * @param {SpeechData} newSpeech - speech object to modify
    */
   set data(newSpeech: SpeechData) {
-    let speech = newSpeech;
-
-    if (!speech) {
-      speech = {
-        speaker: '',
-        timestamp: 0,
-        text: [],
-      };
-    }
-
-    this._data.speaker = speech.speaker || '';
-    this._data.timestamp = speech.timestamp || 0;
-    this._data.text = speech.text || [];
+    this._data.speaker = newSpeech.speaker || Speech.DEFAULT_SPEECH.speaker;
+    this._data.timestamp = newSpeech.timestamp || Speech.DEFAULT_SPEECH.timestamp;
+    this._data.text = newSpeech.text || Speech.DEFAULT_SPEECH.text;
 
     const oldView = this.wrapper;
 
@@ -259,12 +263,24 @@ export default class Speech implements BlockTool {
         this._data.text.push({
           start: parseFloat(textItem.getAttribute('data-start') || ''),
           end: parseFloat(textItem.getAttribute('data-end') || ''),
-          word: textItem.innerHTML,
+          word: textItem.innerHTML.trim(),
         });
       }
     }
 
     return this._data;
+  }
+
+  /**
+   * Icon and title for displaying at the Toolbox
+   *
+   * @returns {{icon: string, title: string}}
+   */
+  static get toolbox(): { icon: string; title: string } {
+    return {
+      icon: require('./toolbox-icon.svg').default,
+      title: 'Speech',
+    };
   }
 
   /**
