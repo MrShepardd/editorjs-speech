@@ -117,19 +117,25 @@ export default class Speech implements BlockTool {
       this.wrapper.addEventListener(
         'keydown',
         event => {
-          const [ENTER, BACKSPACE] = ['Enter', 'Backspace']; // key names
+          const [ENTER, BACKSPACE, A] = [13, 8, 65]; // key names
+          const cmdPressed = event.ctrlKey || event.metaKey;
 
-          switch (event.key) {
+          switch (event.keyCode) {
             case ENTER:
               this.stopEvent(event);
               break;
             case BACKSPACE:
               this.backspace(event);
               break;
+            case A:
+              if (cmdPressed) {
+                this.selectItem(event);
+              }
+              break;
             default:
               break;
           }
-        },
+        }
       );
     }
 
@@ -150,6 +156,29 @@ export default class Speech implements BlockTool {
    */
   public moved(event: Event): void {
     console.log('>> I WAS MOVED', event);
+  }
+
+  /**
+   * Select speech content by CMD+A
+   *
+   * @param {KeyboardEvent} event - KeyboardEvent on Cmd + A pressed
+   */
+  public selectItem(event: KeyboardEvent): void {
+    event.preventDefault();
+
+    const selection = window.getSelection();
+    const currentNode = selection?.anchorNode?.parentNode;
+
+    if (selection && currentNode) {
+      const currentItem = (currentNode as Element).closest('.' + this.CSS.speechContent);
+      const defaultItem = document.createElement('div');
+
+      const range = new Range();
+
+      range.selectNodeContents(currentItem || defaultItem);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
   }
 
   /**
