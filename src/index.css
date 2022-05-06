@@ -12,6 +12,7 @@ p {
 }
 
 .speech-timestamp {
+  position: absolute;
   display: flex;
   flex-flow: row nowrap;
   margin-right: 1rem;
@@ -38,7 +39,8 @@ p {
 }
 
 .speech-content {
-  margin-top: 5px;
+  z-index: 10;
+  margin-top: 24px;
   word-wrap: break-word;
   word-break: break-word;
   white-space: break-spaces;

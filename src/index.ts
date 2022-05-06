@@ -27,7 +27,7 @@ export default class Speech implements BlockTool {
         {
           start: 0.0,
           end: 0.0,
-          word: ' ',
+          word: '',
         },
       ],
     };
@@ -110,8 +110,8 @@ export default class Speech implements BlockTool {
     this.wrapper = make('div', [this.CSS.baseBlock, this.CSS.speech], {
       contentEditable: String(!this.readOnly),
     });
-    this.wrapper.appendChild(this.makeTimestampTag());
     this.wrapper.appendChild(this.makeSpeechTag());
+    this.wrapper.appendChild(this.makeTimestampTag());
 
     if (!this.readOnly) {
       // detect keydown on the last item to escape List
