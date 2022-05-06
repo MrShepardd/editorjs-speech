@@ -212,7 +212,7 @@ export default class Speech implements BlockTool {
 
     if (this._data.text.length) {
       this._data.text.forEach(item => {
-        const domProps = { innerHTML: item.word };
+        const domProps = { innerHTML: `${item.word} ` };
         const attributes = {
           'data-start': item.start.toString(),
           'data-end': item.end.toString(),
@@ -263,7 +263,7 @@ export default class Speech implements BlockTool {
         this._data.text.push({
           start: parseFloat(textItem.getAttribute('data-start') || ''),
           end: parseFloat(textItem.getAttribute('data-end') || ''),
-          word: textItem.innerHTML,
+          word: textItem.innerHTML.trim(),
         });
       }
     }
