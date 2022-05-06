@@ -25,10 +25,16 @@ p {
   font-size: 1rem;
 }
 
-.speech-timestamp-content .speaker-name {
-  margin-right: .5rem;
+.speech-timestamp-content::before {
+  content: attr(data-speaker);
+  margin-right: 0.5rem;
   font-size: 1rem;
   color: #2a5885;
+  font-weight: 600;
+}
+
+.speech-timestamp-content::after {
+  content: attr(data-timestamp);
 }
 
 .speech-content {

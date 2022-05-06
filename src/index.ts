@@ -14,6 +14,7 @@ import { SpeechData } from '../types';
 export default class Speech implements BlockTool {
   /**
    * Default placeholder for Paragraph Tool
+   * ### TODO: **Set caret position to first word in new speech instead using empty object in text**
    *
    * @returns {SpeechData}
    * @static
@@ -190,17 +191,13 @@ export default class Speech implements BlockTool {
     const speechTimestamp = make('p', this.CSS.speechTimestamp, {
       contentEditable: 'false',
     });
-    const speechTimestampContent = make('span', this.CSS.timestampContent);
-    const timestamp = make('span', '', {
-      innerHTML: this._data.timestamp.toString(),
-    });
-    const speakerName = make('strong', this.CSS.speakerName, {
-      innerHTML: this._data.speaker,
-    });
 
-    speechTimestampContent.appendChild(speakerName);
-    speechTimestampContent.appendChild(timestamp);
-    speechTimestamp.appendChild(speechTimestampContent);
+    speechTimestamp.appendChild(
+      make('span', this.CSS.timestampContent, {}, {
+        'data-speaker': this._data.speaker,
+        'data-timestamp': this._data.timestamp.toString(),
+      })
+    );
 
     return speechTimestamp;
   }
