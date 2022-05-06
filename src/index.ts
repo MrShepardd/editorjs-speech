@@ -60,7 +60,7 @@ export default class Speech implements BlockTool {
   private readonly readOnly: boolean;
 
   /**
-   * Tune's wrapper for tools' content
+   * Wrapper for tools' content
    */
   private wrapper!: HTMLElement;
 
@@ -96,8 +96,7 @@ export default class Speech implements BlockTool {
     this.readOnly = readOnly || false;
 
     this._data = Speech.DEFAULT_SPEECH;
-
-    this.data = !!data?.speaker ? data : this._data;
+    this.data = data || this._data;
   }
 
   /**
@@ -131,7 +130,6 @@ export default class Speech implements BlockTool {
               break;
           }
         },
-        false
       );
     }
 
@@ -211,19 +209,9 @@ export default class Speech implements BlockTool {
    * @param {SpeechData} newSpeech - speech object to modify
    */
   set data(newSpeech: SpeechData) {
-    let speech = newSpeech;
-
-    if (!speech) {
-      speech = {
-        speaker: '',
-        timestamp: 0,
-        text: [],
-      };
-    }
-
-    this._data.speaker = speech.speaker || '';
-    this._data.timestamp = speech.timestamp || 0;
-    this._data.text = speech.text || [];
+    this._data.speaker = newSpeech.speaker || Speech.DEFAULT_SPEECH.speaker;
+    this._data.timestamp = newSpeech.timestamp || Speech.DEFAULT_SPEECH.timestamp;
+    this._data.text = newSpeech.text || Speech.DEFAULT_SPEECH.text;
 
     const oldView = this.wrapper;
 
