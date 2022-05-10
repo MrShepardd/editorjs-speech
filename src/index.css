@@ -39,7 +39,6 @@ p {
 }
 
 .speech-content {
-  z-index: 10;
   margin-top: 24px;
   word-wrap: break-word;
   word-break: break-word;
