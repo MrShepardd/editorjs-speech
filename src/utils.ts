@@ -31,3 +31,37 @@ export function make<E extends HTMLElement = HTMLElement>(
 
   return el;
 }
+
+/**
+ * Get UTC Date from timestamp
+ *
+ * @param  {number} timestamp - timestamp
+ * @returns {Date}
+ */
+function getUTCDateFromTimestamp(timestamp: number): Date {
+  const date = new Date(timestamp * 1000);
+  return new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds()
+  );
+}
+
+/**
+ * Formatter for timestamp
+ *
+ * @param  {number} timestamp - original timestamp
+ * @returns {string}
+ */
+export function formatTimestamp(timestamp: number): string {
+  const utcDate = getUTCDateFromTimestamp(timestamp);
+
+  const hours = timestamp > 3600 ? utcDate.getHours() + ':' : '';
+  const minutes = '0' + utcDate.getMinutes();
+  const seconds = '0' + utcDate.getSeconds();
+
+  return hours + minutes.substr(-2) + ':' + seconds.substr(-2);
+}

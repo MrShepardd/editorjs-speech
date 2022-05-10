@@ -4,7 +4,7 @@
 require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
-import { make } from './dom';
+import { make, formatTimestamp } from './utils';
 import { SpeechData } from '../types';
 
 
@@ -195,7 +195,7 @@ export default class Speech implements BlockTool {
     speechTimestamp.appendChild(
       make('span', this.CSS.timestampContent, {}, {
         'data-speaker': this._data.speaker,
-        'data-timestamp': this._data.timestamp.toString(),
+        'data-timestamp': formatTimestamp(this._data.timestamp),
       })
     );
 
