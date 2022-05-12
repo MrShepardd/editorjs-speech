@@ -123,7 +123,7 @@ export default class Speech implements BlockTool {
 
           switch (event.keyCode) {
             case ENTER:
-              this.stopEvent(event);
+              this.getOutOfList(event);
               break;
             case BACKSPACE:
               this.backspace(event);
@@ -309,6 +309,76 @@ export default class Speech implements BlockTool {
   private stopEvent(event: KeyboardEvent): void {
     event.preventDefault();
     event.stopPropagation();
+  }
+
+  /**
+   * Returns current List item by the caret position
+   *
+   * @returns {Element}
+   */
+  get currentItem(): Element | null {
+    let currentNode = window?.getSelection()?.anchorNode;
+    if (!currentNode) {
+      return null;
+    }
+
+    if (currentNode.nodeType !== Node.ELEMENT_NODE) {
+      currentNode = currentNode.parentNode;
+    }
+
+    return (currentNode as Element).closest(`.${this.CSS.speechWord}`) || null;
+  }
+
+  /**
+   * Get out from speech
+   * by Enter on the empty last item
+   *
+   * @param {KeyboardEvent} event
+   */
+  private getOutOfList(event: KeyboardEvent): void {
+    const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
+    /**
+     * Save the last one.
+     */
+    if (text.length < 2) {
+      return;
+    }
+
+    const lastItem = text[text.length - 1];
+    const { currentItem } = this;
+
+    if (!currentItem) {
+      return;
+    }
+
+    const currentIndex = Array.from(text).findIndex((node) => node === currentItem);
+    const newText = [];
+
+    for (let i = 0; i < text.length; i += 1) {
+      const value = text[i].innerHTML.replace('<br>', ' ').trim();
+
+      if (value && i > currentIndex) {
+        currentItem.parentElement?.removeChild(text[i]);
+        newText.push({
+          start: 0,
+          end: 0,
+          word: text[i].innerHTML,
+        });
+      }
+    }
+
+    /** Prevent Default li generation if item is empty */
+    if (currentItem !== lastItem || lastItem.textContent?.trim().length) {
+      /** Insert New Block */
+      this.api.blocks.insert('speech', {
+        ...Speech.DEFAULT_SPEECH,
+        text: newText,
+      });
+
+      this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 
   /**
