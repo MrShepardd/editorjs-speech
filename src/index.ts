@@ -107,9 +107,7 @@ export default class Speech implements BlockTool {
    * @public
    */
   public render(): HTMLElement {
-    this.wrapper = make('div', [this.CSS.baseBlock, this.CSS.speech], {
-      contentEditable: String(!this.readOnly),
-    });
+    this.wrapper = make('div', [this.CSS.baseBlock, this.CSS.speech]);
     this.wrapper.appendChild(this.makeSpeechTag());
     this.wrapper.appendChild(this.makeTimestampTag());
 
@@ -188,9 +186,7 @@ export default class Speech implements BlockTool {
    * @returns {HTMLElement}
    */
   private makeTimestampTag(): HTMLElement {
-    const speechTimestamp = make('p', this.CSS.speechTimestamp, {
-      contentEditable: 'false',
-    });
+    const speechTimestamp = make('p', this.CSS.speechTimestamp);
 
     speechTimestamp.appendChild(
       make('span', this.CSS.timestampContent, {}, {
@@ -208,11 +204,13 @@ export default class Speech implements BlockTool {
    * @returns {HTMLElement}
    */
   private makeSpeechTag(): HTMLElement {
-    const speechContent = make('p', this.CSS.speechContent);
+    const speechContent = make('p', this.CSS.speechContent, {
+      contentEditable: String(!this.readOnly),
+    });
 
     if (this._data.text.length) {
       this._data.text.forEach(item => {
-        const domProps = { innerHTML: `${item.word} ` };
+        const domProps = { innerHTML: ` ${item.word}` };
         const attributes = {
           'data-start': item.start.toString(),
           'data-end': item.end.toString(),
@@ -258,12 +256,13 @@ export default class Speech implements BlockTool {
 
     for (let i = 0; i < text.length; i += 1) {
       const textItem = text[i];
+      const word = textItem.innerHTML.replace(/&nbsp;|\s/gi, ' ').trim();
 
-      if (textItem) {
+      if (textItem && word) {
         this._data.text.push({
+          word,
           start: parseFloat(textItem.getAttribute('data-start') || ''),
           end: parseFloat(textItem.getAttribute('data-end') || ''),
-          word: textItem.innerHTML.trim(),
         });
       }
     }
