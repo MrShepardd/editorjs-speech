@@ -23,13 +23,7 @@ export default class Speech implements BlockTool {
     return {
       timestamp: 0.0,
       speaker: 'Unknown Speaker',
-      text: [
-        {
-          start: 0.0,
-          end: 0.0,
-          word: '',
-        },
-      ],
+      text: [],
     };
   }
 
@@ -221,7 +215,8 @@ export default class Speech implements BlockTool {
         );
       });
     } else {
-      speechContent.appendChild(make('span', this.CSS.speechWord));
+      const domProps = { innerHTML: `&nbsp;` };
+      speechContent.appendChild(make('span', this.CSS.speechWord, domProps));
     }
 
     return speechContent;
