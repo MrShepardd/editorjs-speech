@@ -8,6 +8,10 @@ export interface TextData {
 
 export interface SpeechData {
     /**
+     * Identifier of the speech
+     */
+    id: number
+    /**
      * Speaker name
      */
     speaker: string;

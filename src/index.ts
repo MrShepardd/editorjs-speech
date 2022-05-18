@@ -21,6 +21,7 @@ export default class Speech implements BlockTool {
    */
   static get DEFAULT_SPEECH(): SpeechData {
     return {
+      id: Number.NaN,
       timestamp: 0.0,
       speaker: 'Unknown Speaker',
       text: [],
@@ -62,8 +63,9 @@ export default class Speech implements BlockTool {
   /**
    * Sanitize before saving data
    */
-  public static get sanitize(): { timestamp: boolean; speaker: boolean; text: unknown } {
+  public static get sanitize(): { id: boolean; timestamp: boolean; speaker: boolean; text: unknown } {
     return {
+      id: false, // disallow HTML
       timestamp: false, // disallow HTML
       speaker: false, // disallow HTML
       text: {}, // only tags from Inline Toolbar
@@ -228,6 +230,7 @@ export default class Speech implements BlockTool {
    * @param {SpeechData} newSpeech - speech object to modify
    */
   set data(newSpeech: SpeechData) {
+    this._data.id = newSpeech.id || Speech.DEFAULT_SPEECH.id;
     this._data.speaker = newSpeech.speaker || Speech.DEFAULT_SPEECH.speaker;
     this._data.timestamp = newSpeech.timestamp || Speech.DEFAULT_SPEECH.timestamp;
     this._data.text = newSpeech.text || Speech.DEFAULT_SPEECH.text;
