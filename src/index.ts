@@ -14,7 +14,6 @@ import { SpeechData } from '../types';
 export default class Speech implements BlockTool {
   /**
    * Default placeholder for Paragraph Tool
-   * ### TODO: **Set caret position to first word in new speech instead using empty object in text**
    *
    * @returns {SpeechData}
    * @static
@@ -68,7 +67,9 @@ export default class Speech implements BlockTool {
       id: false, // disallow HTML
       timestamp: false, // disallow HTML
       speaker: false, // disallow HTML
-      text: {}, // only tags from Inline Toolbar
+      text: {
+        br: true,
+      },
     };
   }
 
@@ -117,7 +118,7 @@ export default class Speech implements BlockTool {
 
           switch (event.keyCode) {
             case ENTER:
-              this.getOutOfList(event);
+              this.enter(event, cmdPressed);
               break;
             case BACKSPACE:
               this.backspace(event);
@@ -309,7 +310,7 @@ export default class Speech implements BlockTool {
   }
 
   /**
-   * Returns current List item by the caret position
+   * Returns current Speech item by the caret position
    *
    * @returns {Element}
    */
@@ -331,51 +332,76 @@ export default class Speech implements BlockTool {
    * by Enter on the empty last item
    *
    * @param {KeyboardEvent} event
+   * @param {Element} currentItem
    */
-  private getOutOfList(event: KeyboardEvent): void {
+  private getOutOfSpeech(event: KeyboardEvent, currentItem: Element): void {
     const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
     /**
      * Save the last one.
      */
     if (text.length < 2) {
+      this.stopEvent(event);
       return;
     }
 
-    const lastItem = text[text.length - 1];
-    const { currentItem } = this;
-
-    if (!currentItem) {
-      return;
-    }
-
+    const speechText = this._data.text;
     const currentIndex = Array.from(text).findIndex((node) => node === currentItem);
-    const newText = [];
 
-    for (let i = 0; i < text.length; i += 1) {
-      const value = text[i].innerHTML.replace('<br>', ' ').trim();
+    /** Update Current Block */
+    this.data = {
+      ...this._data,
+      text: speechText.slice(0, currentIndex),
+    };
 
-      if (value && i > currentIndex) {
-        currentItem.parentElement?.removeChild(text[i]);
-        newText.push({
-          start: 0,
-          end: 0,
-          word: text[i].innerHTML,
+    /** Prevent Default speech generation if item is empty */
+    if (currentIndex !== speechText.length) {
+      setTimeout(async () => {
+        /**
+         * Insert New Block
+         * ### TODO: **Find the best way to fix the missing "add-block" event**
+         */
+        this.api.blocks.insert('speech', {
+          ...Speech.DEFAULT_SPEECH,
+          text: speechText.slice(currentIndex),
         });
-      }
-    }
+        this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
+      }, 1000);
 
-    /** Prevent Default li generation if item is empty */
-    if (currentItem !== lastItem || lastItem.textContent?.trim().length) {
-      /** Insert New Block */
-      this.api.blocks.insert('speech', {
-        ...Speech.DEFAULT_SPEECH,
-        text: newText,
-      });
-
-      this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
       event.preventDefault();
       event.stopPropagation();
     }
+  }
+
+  /**
+   * Handle Enter pressed
+   *
+   * @param {KeyboardEvent} event
+   * @param {boolean} cmdPressed
+   */
+  private enter(event: KeyboardEvent, cmdPressed: boolean): void {
+    const { currentItem } = this;
+
+    if (!currentItem) {
+      this.stopEvent(event);
+      return;
+    }
+
+    if (cmdPressed) {
+      this.getOutOfSpeech(event, currentItem);
+      return;
+    }
+
+    const domProps = { innerHTML: `<br>` };
+    const attributes = {
+      'data-start': this._data.timestamp.toString(),
+      'data-end': this._data.timestamp.toString(),
+    };
+
+    currentItem.parentElement?.insertBefore(
+      make('span', this.CSS.speechWord, domProps, attributes),
+      currentItem,
+    );
+    this.stopEvent(event);
   }
 
   /**
