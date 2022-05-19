@@ -199,6 +199,7 @@ export default class Speech implements BlockTool {
    * Returns content element for speech
    *
    * @returns {HTMLElement}
+   * TODO: ** Get rid of duplicate code **
    */
   private makeSpeechTag(): HTMLElement {
     const speechContent = make('p', this.CSS.speechContent, {
@@ -219,7 +220,11 @@ export default class Speech implements BlockTool {
       });
     } else {
       const domProps = { innerHTML: `&nbsp;` };
-      speechContent.appendChild(make('span', this.CSS.speechWord, domProps));
+      const attributes = {
+        'data-start': this._data.timestamp.toString(),
+        'data-end': this._data.timestamp.toString(),
+      };
+      speechContent.appendChild(make('span', this.CSS.speechWord, domProps, attributes));
     }
 
     return speechContent;
@@ -302,9 +307,9 @@ export default class Speech implements BlockTool {
    * Temporary solution to stop processing of this keys:
    * Enter
    *
-   * @param {KeyboardEvent} event - Keyboard event.
+   * @param {Event} event - event.
    */
-  private stopEvent(event: KeyboardEvent): void {
+  private stopEvent(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
   }
