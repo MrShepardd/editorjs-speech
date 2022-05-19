@@ -357,20 +357,16 @@ export default class Speech implements BlockTool {
       ...this._data,
       text: speechText.slice(0, currentIndex),
     };
+    this.dispatchChange();
 
     /** Prevent Default speech generation if item is empty */
     if (currentIndex !== speechText.length) {
-      setTimeout(async () => {
-        /**
-         * Insert New Block
-         * ### TODO: **Find the best way to fix the missing "add-block" event**
-         */
-        this.api.blocks.insert('speech', {
-          ...Speech.DEFAULT_SPEECH,
-          text: speechText.slice(currentIndex),
-        });
-        this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
-      }, 1000);
+      /** Insert New Block */
+      this.api.blocks.insert('speech', {
+        ...Speech.DEFAULT_SPEECH,
+        text: speechText.slice(currentIndex),
+      });
+      this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
 
       event.preventDefault();
       event.stopPropagation();
@@ -422,6 +418,14 @@ export default class Speech implements BlockTool {
      */
     if (text.length === 0) {
       this.stopEvent(event);
+    }
+  }
+
+  private dispatchChange(): void {
+    const index = this.api.blocks.getCurrentBlockIndex();
+    const block = this.api.blocks.getBlockByIndex(index);
+    if (block) {
+      block.dispatchChange();
     }
   }
 }
