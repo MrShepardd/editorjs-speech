@@ -357,16 +357,17 @@ export default class Speech implements BlockTool {
       ...this._data,
       text: speechText.slice(0, currentIndex),
     };
-    this.dispatchChange();
 
     /** Prevent Default speech generation if item is empty */
     if (currentIndex !== speechText.length) {
       /** Insert New Block */
-      this.api.blocks.insert('speech', {
-        ...Speech.DEFAULT_SPEECH,
-        text: speechText.slice(currentIndex),
-      });
-      this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
+      setTimeout(() => {
+        this.api.blocks.insert('speech', {
+          ...Speech.DEFAULT_SPEECH,
+          text: speechText.slice(currentIndex),
+        });
+        this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
+      }, 500);
 
       event.preventDefault();
       event.stopPropagation();
