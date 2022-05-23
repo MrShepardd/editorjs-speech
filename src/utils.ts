@@ -65,3 +65,16 @@ export function formatTimestamp(timestamp: number): string {
 
   return hours + minutes.substr(-2) + ':' + seconds.substr(-2);
 }
+
+/**
+ * Clear word from &nbsp; and spaces
+ *
+ * @param  {string} word - word from speech
+ * @param {boolean} trimStart - should trim space from start of word
+ * @returns {string}
+ */
+export function trimWord(word: string, trimStart = true): string {
+  return trimStart
+    ? word.replace(/&nbsp;|\s/gi, ' ').trim()
+    : word.replace(/&nbsp;|\s/gi, ' ').trimEnd();
+}

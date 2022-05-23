@@ -4,7 +4,7 @@
 require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
-import { make, formatTimestamp } from './utils';
+import { make, formatTimestamp, trimWord } from './utils';
 import { SpeechData } from '../types';
 
 
@@ -263,7 +263,7 @@ export default class Speech implements BlockTool {
 
     for (let i = 0; i < text.length; i += 1) {
       const textItem = text[i];
-      const word = textItem.innerHTML.replace(/&nbsp;|\s/gi, ' ').trim();
+      const word = trimWord(textItem.innerHTML);
 
       if (textItem && word) {
         this._data.text.push({
@@ -318,21 +318,26 @@ export default class Speech implements BlockTool {
   }
 
   /**
-   * Returns current Speech item by the caret position
+   * Returns current Speech item and caret position
    *
-   * @returns {Element}
+   * @returns {[Element, number] | [null, number]}
    */
-  get currentItem(): Element | null {
-    let currentNode = window?.getSelection()?.anchorNode;
-    if (!currentNode) {
-      return null;
+  get currentItem(): [Element, number] | [null, number] {
+    const selection = window.getSelection();
+
+    let currentNode = selection?.anchorNode;
+    if (!selection || !currentNode) {
+      return [null, 0];
     }
 
     if (currentNode.nodeType !== Node.ELEMENT_NODE) {
       currentNode = currentNode.parentNode;
     }
 
-    return (currentNode as Element).closest(`.${this.CSS.speechWord}`) || null;
+    return [
+      (currentNode as Element).closest(`.${this.CSS.speechWord}`),
+      selection.anchorOffset
+    ] || [null, 0];
   }
 
   /**
@@ -342,7 +347,7 @@ export default class Speech implements BlockTool {
    * @param {KeyboardEvent} event
    * @param {Element} currentItem
    */
-  private getOutOfSpeech(event: KeyboardEvent, currentItem: Element): void {
+  private getOutOfSpeech(event: KeyboardEvent, currentItem: Element, cursorAtEnd: boolean): void {
     const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
     /**
      * Save the last one.
@@ -353,7 +358,8 @@ export default class Speech implements BlockTool {
     }
 
     const speechText = this._data.text;
-    const currentIndex = Array.from(text).findIndex((node) => node === currentItem);
+    const searchedItem = cursorAtEnd ? currentItem.nextSibling : currentItem;
+    const currentIndex = Array.from(text).findIndex((node) => node === searchedItem);
 
     /** Update Current Block */
     this.data = {
@@ -384,15 +390,17 @@ export default class Speech implements BlockTool {
    * @param {boolean} cmdPressed
    */
   private enter(event: KeyboardEvent, cmdPressed: boolean): void {
-    const { currentItem } = this;
+    const [currentItem, anchorOffset] = this.currentItem;
 
     if (!currentItem) {
       this.stopEvent(event);
       return;
     }
 
+    const cursorAtEnd = anchorOffset === trimWord(currentItem.innerHTML, false).length;
+
     if (cmdPressed) {
-      this.getOutOfSpeech(event, currentItem);
+      this.getOutOfSpeech(event, currentItem, cursorAtEnd);
       return;
     }
 
@@ -404,8 +412,9 @@ export default class Speech implements BlockTool {
 
     currentItem.parentElement?.insertBefore(
       make('span', this.CSS.speechWord, domProps, attributes),
-      currentItem,
+      cursorAtEnd ? currentItem.nextSibling : currentItem,
     );
+
     this.stopEvent(event);
   }
 
