@@ -22,6 +22,11 @@ export interface SpeechData {
     timestamp: number;
 
     /**
+     * Does it mean that the block was split into two parts
+     */
+    wasSplit: boolean;
+
+    /**
      * Note's superscript index
      */
     text: TextData[];

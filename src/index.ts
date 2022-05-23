@@ -22,6 +22,7 @@ export default class Speech implements BlockTool {
     return {
       id: Number.NaN,
       timestamp: 0.0,
+      wasSplit: false,
       speaker: 'Unknown Speaker',
       text: [],
     };
@@ -62,11 +63,12 @@ export default class Speech implements BlockTool {
   /**
    * Sanitize before saving data
    */
-  public static get sanitize(): { id: boolean; timestamp: boolean; speaker: boolean; text: unknown } {
+  public static get sanitize(): { [key: string]: boolean | unknown } {
     return {
       id: false, // disallow HTML
       timestamp: false, // disallow HTML
       speaker: false, // disallow HTML
+      wasSplit: false, // disallow HTML
       text: {
         br: true,
       },
@@ -239,6 +241,7 @@ export default class Speech implements BlockTool {
     this._data.id = newSpeech.id || Speech.DEFAULT_SPEECH.id;
     this._data.speaker = newSpeech.speaker || Speech.DEFAULT_SPEECH.speaker;
     this._data.timestamp = newSpeech.timestamp || Speech.DEFAULT_SPEECH.timestamp;
+    this._data.wasSplit = newSpeech.wasSplit || Speech.DEFAULT_SPEECH.wasSplit;
     this._data.text = newSpeech.text || Speech.DEFAULT_SPEECH.text;
 
     const oldView = this.wrapper;
@@ -355,19 +358,19 @@ export default class Speech implements BlockTool {
     /** Update Current Block */
     this.data = {
       ...this._data,
+      wasSplit: true,
       text: speechText.slice(0, currentIndex),
     };
 
     /** Prevent Default speech generation if item is empty */
     if (currentIndex !== speechText.length) {
       /** Insert New Block */
-      setTimeout(() => {
-        this.api.blocks.insert('speech', {
-          ...Speech.DEFAULT_SPEECH,
-          text: speechText.slice(currentIndex),
-        });
-        this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
-      }, 500);
+      this.api.blocks.insert('speech', {
+        ...Speech.DEFAULT_SPEECH,
+        wasSplit: true,
+        text: speechText.slice(currentIndex),
+      });
+      this.api.caret.setToBlock(this.api.blocks.getCurrentBlockIndex());
 
       event.preventDefault();
       event.stopPropagation();
