@@ -426,6 +426,21 @@ export default class Speech implements BlockTool {
   private backspace(event: KeyboardEvent): void {
     const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
 
+    const [currentItem, anchorOffset] = this.currentItem;
+    const currentIndex = Array.from(text).findIndex((node) => node === currentItem);
+
+    if (currentIndex > 0 && anchorOffset === 1) {
+      const speechText = [...this._data.text];
+      speechText[currentIndex - 1].word += speechText[currentIndex].word;
+      speechText.splice(currentIndex, 1);
+
+      /** Update Current Block */
+      this.data = {
+        ...this._data,
+        text: speechText,
+      };
+    }
+
     /**
      * Save the last one.
      */
