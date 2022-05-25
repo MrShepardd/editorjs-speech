@@ -369,9 +369,11 @@ export default class Speech implements BlockTool {
     };
 
     /** Prevent Default speech generation if item is empty */
-    if (currentIndex !== speechText.length) {
+    const block = this.api.blocks.getBlockByIndex(this.api.blocks.getCurrentBlockIndex());
+
+    if (block && currentIndex !== speechText.length) {
       /** Insert New Block */
-      this.api.blocks.insert('speech', {
+      this.api.blocks.insert(block.name, {
         ...Speech.DEFAULT_SPEECH,
         wasSplit: true,
         text: speechText.slice(currentIndex),
