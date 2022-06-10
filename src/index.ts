@@ -4,9 +4,8 @@
 require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
-import { make, formatTimestamp, trimWord } from './utils';
+import { make, formatTimestamp, trimWord, splitAt, setSelectionAtStart } from './utils';
 import { SpeechData } from '../types';
-
 
 /**
  * Speech tool implements of Editor.JS Block
@@ -112,29 +111,32 @@ export default class Speech implements BlockTool {
 
     if (!this.readOnly) {
       // detect keydown on the last item to escape List
-      this.wrapper.addEventListener(
-        'keydown',
-        event => {
-          const [ENTER, BACKSPACE, A] = [13, 8, 65]; // key names
-          const cmdPressed = event.ctrlKey || event.metaKey;
+      this.wrapper.addEventListener('keydown', event => {
+        const [ENTER, BACKSPACE, WHITESPACE, DELETE, A] = [13, 8, 32, 46, 65]; // key names
+        const cmdPressed = event.ctrlKey || event.metaKey;
 
-          switch (event.keyCode) {
-            case ENTER:
-              this.enter(event, cmdPressed);
-              break;
-            case BACKSPACE:
-              this.backspace(event);
-              break;
-            case A:
-              if (cmdPressed) {
-                this.selectItem(event);
-              }
-              break;
-            default:
-              break;
-          }
+        switch (event.keyCode) {
+          case ENTER:
+            this.enter(event, cmdPressed);
+            break;
+          case BACKSPACE:
+            this.backspace(event);
+            break;
+          case WHITESPACE:
+            this.whitespace(event);
+            break;
+          case DELETE:
+            this.delete(event);
+            break;
+          case A:
+            if (cmdPressed) {
+              this.selectItem(event);
+            }
+            break;
+          default:
+            break;
         }
-      );
+      });
     }
 
     return this.wrapper;
@@ -168,7 +170,9 @@ export default class Speech implements BlockTool {
     const currentNode = selection?.anchorNode?.parentNode;
 
     if (selection && currentNode) {
-      const currentItem = (currentNode as Element).closest('.' + this.CSS.speechContent);
+      const currentItem = (currentNode as Element).closest(
+        '.' + this.CSS.speechContent
+      );
       const defaultItem = document.createElement('div');
 
       const range = new Range();
@@ -188,10 +192,15 @@ export default class Speech implements BlockTool {
     const speechTimestamp = make('p', this.CSS.speechTimestamp);
 
     speechTimestamp.appendChild(
-      make('span', this.CSS.timestampContent, {}, {
-        'data-speaker': this._data.speaker,
-        'data-timestamp': formatTimestamp(this._data.timestamp),
-      })
+      make(
+        'span',
+        this.CSS.timestampContent,
+        {},
+        {
+          'data-speaker': this._data.speaker,
+          'data-timestamp': formatTimestamp(this._data.timestamp),
+        }
+      )
     );
 
     return speechTimestamp;
@@ -210,26 +219,37 @@ export default class Speech implements BlockTool {
 
     if (this._data.text.length) {
       this._data.text.forEach(item => {
-        const domProps = { innerHTML: ` ${item.word}` };
-        const attributes = {
-          'data-start': item.start.toString(),
-          'data-end': item.end.toString(),
-        };
-
-        speechContent.appendChild(
-          make('span', this.CSS.speechWord, domProps, attributes)
-        );
+        const { word, start, end } = item;
+        speechContent.appendChild(this.makeSpeechWord(word, start, end));
       });
     } else {
-      const domProps = { innerHTML: `&nbsp;` };
-      const attributes = {
-        'data-start': this._data.timestamp.toString(),
-        'data-end': this._data.timestamp.toString(),
-      };
-      speechContent.appendChild(make('span', this.CSS.speechWord, domProps, attributes));
+      speechContent.appendChild(this.makeSpeechWord('&nbsp;'));
     }
 
     return speechContent;
+  }
+
+  /**
+   * Returns content element for speech word
+   *
+   * @param {string} word - text content
+   * @param {number} start - start timestamp for word
+   * @param {number} end - end timestamp for word
+   * @returns {HTMLElement}
+   */
+  private makeSpeechWord(word: string, start = 0, end = 0): HTMLElement {
+    if (!start || !end) {
+      start = this._data.timestamp;
+      end = this._data.timestamp;
+    }
+
+    const domProps = { innerHTML: ` ${word}` };
+    const attributes = {
+      'data-start': start.toString(),
+      'data-end': end.toString(),
+    };
+
+    return make('span', this.CSS.speechWord, domProps, attributes);
   }
 
   /**
@@ -240,7 +260,8 @@ export default class Speech implements BlockTool {
   set data(newSpeech: SpeechData) {
     this._data.id = newSpeech.id || Speech.DEFAULT_SPEECH.id;
     this._data.speaker = newSpeech.speaker || Speech.DEFAULT_SPEECH.speaker;
-    this._data.timestamp = newSpeech.timestamp || Speech.DEFAULT_SPEECH.timestamp;
+    this._data.timestamp =
+      newSpeech.timestamp || Speech.DEFAULT_SPEECH.timestamp;
     this._data.wasSplit = newSpeech.wasSplit || Speech.DEFAULT_SPEECH.wasSplit;
     this._data.text = newSpeech.text || Speech.DEFAULT_SPEECH.text;
 
@@ -334,10 +355,12 @@ export default class Speech implements BlockTool {
       currentNode = currentNode.parentNode;
     }
 
-    return [
-      (currentNode as Element).closest(`.${this.CSS.speechWord}`),
-      selection.anchorOffset
-    ] || [null, 0];
+    return (
+      [
+        (currentNode as Element).closest(`.${this.CSS.speechWord}`),
+        selection.anchorOffset,
+      ] || [null, 0]
+    );
   }
 
   /**
@@ -346,8 +369,13 @@ export default class Speech implements BlockTool {
    *
    * @param {KeyboardEvent} event
    * @param {Element} currentItem
+   * @param {boolean} cursorAtEnd
    */
-  private getOutOfSpeech(event: KeyboardEvent, currentItem: Element, cursorAtEnd: boolean): void {
+  private getOutOfSpeech(
+    event: KeyboardEvent,
+    currentItem: Element,
+    cursorAtEnd: boolean
+  ): void {
     const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
     /**
      * Save the last one.
@@ -359,7 +387,9 @@ export default class Speech implements BlockTool {
 
     const speechText = this._data.text;
     const searchedItem = cursorAtEnd ? currentItem.nextSibling : currentItem;
-    const currentIndex = Array.from(text).findIndex((node) => node === searchedItem);
+    const currentIndex = Array.from(text).findIndex(
+      node => node === searchedItem
+    );
 
     /** Update Current Block */
     this.data = {
@@ -369,7 +399,9 @@ export default class Speech implements BlockTool {
     };
 
     /** Prevent Default speech generation if item is empty */
-    const block = this.api.blocks.getBlockByIndex(this.api.blocks.getCurrentBlockIndex());
+    const block = this.api.blocks.getBlockByIndex(
+      this.api.blocks.getCurrentBlockIndex()
+    );
 
     if (block && currentIndex !== speechText.length) {
       /** Insert New Block */
@@ -399,22 +431,17 @@ export default class Speech implements BlockTool {
       return;
     }
 
-    const cursorAtEnd = anchorOffset === trimWord(currentItem.innerHTML, false).length;
+    const cursorAtEnd =
+      anchorOffset === trimWord(currentItem.innerHTML, false).length;
 
     if (cmdPressed) {
       this.getOutOfSpeech(event, currentItem, cursorAtEnd);
       return;
     }
 
-    const domProps = { innerHTML: `<br>` };
-    const attributes = {
-      'data-start': this._data.timestamp.toString(),
-      'data-end': this._data.timestamp.toString(),
-    };
-
     currentItem.parentElement?.insertBefore(
-      make('span', this.CSS.speechWord, domProps, attributes),
-      cursorAtEnd ? currentItem.nextSibling : currentItem,
+      this.makeSpeechWord('<br>'),
+      cursorAtEnd ? currentItem.nextSibling : currentItem
     );
 
     this.stopEvent(event);
@@ -426,21 +453,105 @@ export default class Speech implements BlockTool {
    * @param {KeyboardEvent} event - Keyboard event on backspace.
    */
   private backspace(event: KeyboardEvent): void {
+    const [currentItem, anchorOffset] = this.currentItem;
     const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
 
-    /**
-     * Save the last one.
-     */
-    if (text.length === 0) {
+    if (!currentItem || text.length === 0) {
+      this.stopEvent(event);
+      return;
+    }
+
+    if (anchorOffset === 1) {
+      const currentIndex = Array.from(text).findIndex(
+        node => node === currentItem
+      );
+      const prevItem = text[currentIndex - 1];
+      const mergedText =
+        trimWord(prevItem.innerHTML) + trimWord(currentItem.innerHTML);
+
+      const word = this.makeSpeechWord(
+        mergedText,
+        Number(currentItem.getAttribute('data-start')),
+        Number(currentItem.getAttribute('data-end'))
+      );
+
+      currentItem.parentElement?.insertBefore(word, currentItem);
+      currentItem.parentElement?.removeChild(prevItem);
+      currentItem.parentElement?.removeChild(text[currentIndex]);
+
       this.stopEvent(event);
     }
   }
 
-  private dispatchChange(): void {
-    const index = this.api.blocks.getCurrentBlockIndex();
-    const block = this.api.blocks.getBlockByIndex(index);
-    if (block) {
-      block.dispatchChange();
+  /**
+   * Handle delete
+   *
+   * @param {KeyboardEvent} event - Keyboard event on delete.
+   */
+  private delete(event: KeyboardEvent): void {
+    const [currentItem, anchorOffset] = this.currentItem;
+
+    if (!currentItem) {
+      this.stopEvent(event);
+      return;
+    }
+
+    const cursorAtEnd =
+      anchorOffset === trimWord(currentItem.innerHTML, false).length;
+
+    if (cursorAtEnd) {
+      const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
+      const currentIndex = Array.from(text).findIndex(
+        node => node === currentItem
+      );
+      const nextItem = text[currentIndex + 1];
+      const mergedText =
+        trimWord(currentItem.innerHTML) + trimWord(nextItem.innerHTML);
+
+      const word = this.makeSpeechWord(
+        mergedText,
+        Number(currentItem.getAttribute('data-start')),
+        Number(currentItem.getAttribute('data-end'))
+      );
+
+      currentItem.parentElement?.insertBefore(word, currentItem);
+      currentItem.parentElement?.removeChild(nextItem);
+      currentItem.parentElement?.removeChild(currentItem);
+
+      this.stopEvent(event);
+    }
+  }
+
+  /**
+   * Handle whitespace
+   *
+   * @param {KeyboardEvent} event - Keyboard event on whitespace.
+   */
+  private whitespace(event: KeyboardEvent): void {
+    const [currentItem, anchorOffset] = this.currentItem;
+
+    if (!currentItem) {
+      this.stopEvent(event);
+      return;
+    }
+
+    const currentText = currentItem.innerHTML.replace(/&nbsp;|\s/gi, ' ');
+    const cursorAtEnd = anchorOffset === currentText.length;
+
+    if (!cursorAtEnd) {
+      splitAt(anchorOffset)(currentText).forEach(item => {
+        const word = this.makeSpeechWord(
+          item,
+          Number(currentItem.getAttribute('data-start')),
+          Number(currentItem.getAttribute('data-end'))
+        );
+
+        currentItem.parentElement?.insertBefore(word, currentItem);
+        setSelectionAtStart(word);
+      });
+
+      currentItem.parentElement?.removeChild(currentItem);
+      this.stopEvent(event);
     }
   }
 }

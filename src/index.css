@@ -47,4 +47,5 @@ p {
 .speech-word {
   font-size: 1rem;
   color: #000;
+  caret-color: black;
 }
