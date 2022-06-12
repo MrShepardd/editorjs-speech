@@ -86,12 +86,12 @@ export const splitAt = (index: number) => (x: string) => [x.slice(0, index), x.s
  *
  * @param element - element to set selection in
  */
-export function setSelectionAtStart(element: HTMLElement): void {
+export function setSelectionAtEnd(element: HTMLElement): void {
   const selection = window.getSelection();
   const range = new Range();
 
-  range.setStart(element, 0);
-  range.collapse(true);
+  range.selectNodeContents(element);
+  range.collapse();
 
   selection?.removeAllRanges();
   selection?.addRange(range);

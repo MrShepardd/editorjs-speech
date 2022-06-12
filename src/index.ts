@@ -4,7 +4,13 @@
 require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
-import { make, formatTimestamp, trimWord, splitAt, setSelectionAtStart } from './utils';
+import {
+  make,
+  formatTimestamp,
+  trimWord,
+  splitAt,
+  setSelectionAtEnd,
+} from './utils';
 import { SpeechData } from '../types';
 
 /**
@@ -439,11 +445,7 @@ export default class Speech implements BlockTool {
       return;
     }
 
-    currentItem.parentElement?.insertBefore(
-      this.makeSpeechWord('<br>'),
-      cursorAtEnd ? currentItem.nextSibling : currentItem
-    );
-
+    this.insertBrInSpeechText(currentItem, cursorAtEnd);
     this.stopEvent(event);
   }
 
@@ -455,30 +457,16 @@ export default class Speech implements BlockTool {
   private backspace(event: KeyboardEvent): void {
     const [currentItem, anchorOffset] = this.currentItem;
     const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
+    const isFirstElement =
+      Array.from(text).findIndex(n => n === currentItem) < 1;
 
     if (!currentItem || text.length === 0) {
       this.stopEvent(event);
       return;
     }
 
-    if (anchorOffset === 1) {
-      const currentIndex = Array.from(text).findIndex(
-        node => node === currentItem
-      );
-      const prevItem = text[currentIndex - 1];
-      const mergedText =
-        trimWord(prevItem.innerHTML) + trimWord(currentItem.innerHTML);
-
-      const word = this.makeSpeechWord(
-        mergedText,
-        Number(currentItem.getAttribute('data-start')),
-        Number(currentItem.getAttribute('data-end'))
-      );
-
-      currentItem.parentElement?.insertBefore(word, currentItem);
-      currentItem.parentElement?.removeChild(prevItem);
-      currentItem.parentElement?.removeChild(text[currentIndex]);
-
+    if (anchorOffset === 1 && !isFirstElement) {
+      this.mergeSpeechText(currentItem, true);
       this.stopEvent(event);
     }
   }
@@ -496,28 +484,14 @@ export default class Speech implements BlockTool {
       return;
     }
 
+    const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
     const cursorAtEnd =
       anchorOffset === trimWord(currentItem.innerHTML, false).length;
+    const isLastElement =
+      Array.from(text).findIndex(n => n === currentItem) === text.length - 1;
 
-    if (cursorAtEnd) {
-      const text = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
-      const currentIndex = Array.from(text).findIndex(
-        node => node === currentItem
-      );
-      const nextItem = text[currentIndex + 1];
-      const mergedText =
-        trimWord(currentItem.innerHTML) + trimWord(nextItem.innerHTML);
-
-      const word = this.makeSpeechWord(
-        mergedText,
-        Number(currentItem.getAttribute('data-start')),
-        Number(currentItem.getAttribute('data-end'))
-      );
-
-      currentItem.parentElement?.insertBefore(word, currentItem);
-      currentItem.parentElement?.removeChild(nextItem);
-      currentItem.parentElement?.removeChild(currentItem);
-
+    if (cursorAtEnd && !isLastElement) {
+      this.mergeSpeechText(currentItem, false);
       this.stopEvent(event);
     }
   }
@@ -539,19 +513,61 @@ export default class Speech implements BlockTool {
     const cursorAtEnd = anchorOffset === currentText.length;
 
     if (!cursorAtEnd) {
-      splitAt(anchorOffset)(currentText).forEach(item => {
-        const word = this.makeSpeechWord(
-          item,
-          Number(currentItem.getAttribute('data-start')),
-          Number(currentItem.getAttribute('data-end'))
-        );
-
-        currentItem.parentElement?.insertBefore(word, currentItem);
-        setSelectionAtStart(word);
-      });
-
-      currentItem.parentElement?.removeChild(currentItem);
+      this.splitSpeechText(currentItem, anchorOffset);
       this.stopEvent(event);
     }
+  }
+
+  private insertBrInSpeechText(target: Element, insertAfter: boolean): void {
+    const word = this.makeSpeechWord(
+      '<br>',
+      Number(target.getAttribute('data-start')),
+      Number(target.getAttribute('data-end'))
+    );
+
+    target.parentElement?.insertBefore(
+      word,
+      insertAfter ? target.nextSibling : target
+    );
+  }
+
+  private splitSpeechText(target: Element, anchorOffset: number): void {
+    const targetText = target.innerHTML.replace(/&nbsp;|\s/gi, ' ');
+
+    const [word1, word2] = splitAt(anchorOffset)(targetText).map(word =>
+      this.makeSpeechWord(
+        word,
+        Number(target.getAttribute('data-start')),
+        Number(target.getAttribute('data-end'))
+      )
+    );
+
+    target.parentElement?.insertBefore(word1, target);
+    target.parentElement?.insertBefore(word2, target);
+    target.parentElement?.removeChild(target);
+
+    setSelectionAtEnd(word1);
+  }
+
+  private mergeSpeechText(target: Element, mergePrevious: boolean): void {
+    const speechText = this.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
+
+    const targetIndex = Array.from(speechText).findIndex(n => n === target);
+    const mergedIndex = mergePrevious ? targetIndex - 1 : targetIndex + 1;
+    const mergedItem = speechText[mergedIndex];
+
+    const word = this.makeSpeechWord(
+      mergePrevious
+        ? trimWord(mergedItem.innerHTML) + trimWord(target.innerHTML)
+        : trimWord(target.innerHTML) + trimWord(mergedItem.innerHTML),
+      Number(target.getAttribute('data-start')),
+      Number(target.getAttribute('data-end'))
+    );
+
+    target.parentElement?.insertBefore(word, target);
+    target.parentElement?.removeChild(mergedItem);
+    target.parentElement?.removeChild(target);
+
+    setSelectionAtEnd(word);
   }
 }
