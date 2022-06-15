@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.6](https://github.com/MrShepardd/editorjs-speech/compare/v1.1.6-next.2...v1.1.6) (2022-06-15)
+
+
+
 ### [1.1.6-next.2](https://github.com/MrShepardd/editorjs-speech/compare/v1.1.6-next.1...v1.1.6-next.2) (2022-06-14)
 
 
