@@ -32,6 +32,10 @@ export interface SpeechData {
     text: TextData[];
 }
 
+export interface SpeechToolConfig {
+    speakerList?: string[];
+}
+
 declare class Speech implements BlockTool {
     render(): HTMLElement;
     save(): BlockToolData<SpeechData>;

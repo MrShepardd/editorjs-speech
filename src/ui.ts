@@ -8,7 +8,8 @@ import {
   setSelectionAt,
 } from './utils';
 import { API } from '@editorjs/editorjs';
-import { SpeechData, TextData } from '../types';
+import { SpeechData, SpeechToolConfig, TextData } from '../types';
+import Popover from './popover';
 
 /**
  * Class for working with UI:
@@ -40,6 +41,11 @@ export default class Ui {
   private nodes!: { [key: string]: HTMLElement };
 
   /**
+   * popover for speaker edit
+   */
+  private readonly popover: Popover;
+
+  /**
    * Speech's data
    */
   private speechData!: SpeechData;
@@ -52,11 +58,15 @@ export default class Ui {
    */
   constructor({
     api,
+    config,
     onSplitSpeech,
+    onEditSpeaker,
     readOnly,
   }: {
     api: API;
+    config: SpeechToolConfig;
     onSplitSpeech: (blockIndex: number) => void;
+    onEditSpeaker: (speaker: string) => void;
     readOnly: boolean;
   }) {
     this.api = api;
@@ -68,6 +78,7 @@ export default class Ui {
       timestampTag: make('p', [this.CSS.speechTimestamp]),
     };
 
+    this.popover = new Popover(onEditSpeaker, api, config);
     this.listener = this.listener.bind(this);
   }
 
@@ -168,6 +179,12 @@ export default class Ui {
     this.nodes.wrapper.innerHTML = '';
     this.nodes.wrapper.appendChild(this.nodes.speechTag);
     this.nodes.wrapper.appendChild(this.nodes.timestampTag);
+    this.nodes.wrapper.appendChild(this.popover.node);
+
+    this.nodes.timestampTag.addEventListener('click', event => {
+      this.popover.open(toolData);
+      stopEvent(event);
+    });
 
     if (!this.readOnly) {
       this.nodes.wrapper.addEventListener('keydown', this.listener, false);
