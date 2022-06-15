@@ -79,20 +79,60 @@ export function trimWord(word: string, trimStart = true): string {
     : word.replace(/&nbsp;|\s/gi, ' ').trimEnd();
 }
 
-export const splitAt = (index: number) => (x: string) => [x.slice(0, index), x.slice(index)];
+export const splitAt = (index: number) => (x: string) =>
+  [x.slice(0, index), x.slice(index)];
 
 /**
  * Sets cursor to the end of element's content
  *
  * @param element - element to set selection in
  */
-export function setSelectionAtEnd(element: HTMLElement): void {
+export function setSelectionAt(element: HTMLElement, position: number): void {
   const selection = window.getSelection();
   const range = new Range();
 
-  range.selectNodeContents(element);
-  range.collapse();
+  range.setStart(element.childNodes[0], position);
+  range.collapse(true);
 
   selection?.removeAllRanges();
   selection?.addRange(range);
+}
+
+/**
+ * Stop event propagation:
+ *
+ * @param {Event} event - event.
+ */
+export function stopEvent(event: Event): void {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+/**
+ * Returns current selected element and caret position
+ *
+ * @param {string} selector - selector name
+ * @returns {[Element, number] | [null, number]}
+ */
+export function findSelectedElement(
+  selector: string
+): [Element, number] | [null, number] {
+  const selection = window.getSelection();
+
+  let currentNode = selection?.anchorNode;
+
+  if (!selection || !currentNode) {
+    return [null, 0];
+  }
+
+  if (currentNode.nodeType !== Node.ELEMENT_NODE) {
+    currentNode = currentNode.parentNode;
+  }
+
+  return (
+    [
+      (currentNode as Element).closest(`.${selector}`),
+      selection.anchorOffset,
+    ] || [null, 0]
+  );
 }
