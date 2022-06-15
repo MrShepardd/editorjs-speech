@@ -447,6 +447,6 @@ export default class Ui {
       ? mergedItem.innerHTML.length
       : target.innerHTML.length;
 
-    setSelectionAt(word, position - 1);
+    setSelectionAt(word, position);
   }
 }
