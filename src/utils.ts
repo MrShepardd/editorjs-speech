@@ -116,23 +116,31 @@ export function stopEvent(event: Event): void {
  */
 export function findSelectedElement(
   selector: string
-): [Element, number] | [null, number] {
-  const selection = window.getSelection();
+): {
+  node: Element | null;
+  anchorOffset: number;
+  isCollapsed: boolean;
+} {
+  const defaultResult = {
+    node: null,
+    anchorOffset: 0,
+    isCollapsed: false
+  };
 
+  const selection = window.getSelection();
   let currentNode = selection?.anchorNode;
 
   if (!selection || !currentNode) {
-    return [null, 0];
+    return defaultResult;
   }
 
   if (currentNode.nodeType !== Node.ELEMENT_NODE) {
     currentNode = currentNode.parentNode;
   }
 
-  return (
-    [
-      (currentNode as Element).closest(`.${selector}`),
-      selection.anchorOffset,
-    ] || [null, 0]
-  );
+  return {
+    node: (currentNode as Element).closest(`.${selector}`),
+    anchorOffset: selection.anchorOffset,
+    isCollapsed: selection.isCollapsed,
+  };
 }

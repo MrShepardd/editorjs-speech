@@ -296,7 +296,7 @@ export default class Ui {
    * @param {boolean} cmdPressed - is cmd pressed
    */
   private enter(event: KeyboardEvent, cmdPressed: boolean): void {
-    const [currentItem, anchorOffset] = findSelectedElement(
+    const { node: currentItem, anchorOffset } = findSelectedElement(
       this.CSS.speechWord
     );
 
@@ -323,7 +323,7 @@ export default class Ui {
    * @param {KeyboardEvent} event - Keyboard event on backspace.
    */
   private backspace(event: KeyboardEvent): void {
-    const [currentItem, anchorOffset] = findSelectedElement(
+    const { node: currentItem, anchorOffset, isCollapsed } = findSelectedElement(
       this.CSS.speechWord
     );
     const text = this.nodes.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
@@ -335,7 +335,7 @@ export default class Ui {
       return;
     }
 
-    if (anchorOffset === 1 && !isFirstElement) {
+    if (anchorOffset === 1 && !isFirstElement && isCollapsed) {
       this.mergeSpeechText(currentItem, true);
       stopEvent(event);
     }
@@ -347,7 +347,7 @@ export default class Ui {
    * @param {KeyboardEvent} event - Keyboard event on delete.
    */
   private delete(event: KeyboardEvent): void {
-    const [currentItem, anchorOffset] = findSelectedElement(
+    const { node: currentItem, anchorOffset } = findSelectedElement(
       this.CSS.speechWord
     );
 
@@ -374,7 +374,7 @@ export default class Ui {
    * @param {KeyboardEvent} event - Keyboard event on whitespace.
    */
   private whitespace(event: KeyboardEvent): void {
-    const [currentItem, anchorOffset] = findSelectedElement(
+    const { node: currentItem, anchorOffset } = findSelectedElement(
       this.CSS.speechWord
     );
     if (!currentItem) {
