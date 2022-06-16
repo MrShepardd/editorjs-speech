@@ -128,6 +128,10 @@ export default class Speech implements BlockTool {
    * @public
    */
   public render(): HTMLElement {
+    this._data.text = this._data.text.map(item => ({
+      ...item,
+      word: this.api.sanitizer.clean(item.word, { br: true })
+    }));
     return this.ui.render(this._data);
   }
 
