@@ -6,6 +6,7 @@ import {
   findSelectedElement,
   splitAt,
   setSelectionAt,
+  unescape,
 } from './utils';
 import { API } from '@editorjs/editorjs';
 import { SpeechData, TextData } from '../types';
@@ -323,9 +324,11 @@ export default class Ui {
    * @param {KeyboardEvent} event - Keyboard event on backspace.
    */
   private backspace(event: KeyboardEvent): void {
-    const { node: currentItem, anchorOffset, isCollapsed } = findSelectedElement(
-      this.CSS.speechWord
-    );
+    const {
+      node: currentItem,
+      anchorOffset,
+      isCollapsed,
+    } = findSelectedElement(this.CSS.speechWord);
     const text = this.nodes.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
     const isFirstElement =
       Array.from(text).findIndex(n => n === currentItem) < 1;
@@ -382,7 +385,7 @@ export default class Ui {
       return;
     }
 
-    const currentText = currentItem.innerHTML.replace(/&nbsp;|\s/gi, ' ');
+    const currentText = unescape(currentItem.innerHTML);
     const cursorAtEnd = anchorOffset === currentText.length;
 
     if (!cursorAtEnd) {
@@ -405,7 +408,7 @@ export default class Ui {
   }
 
   private splitSpeechText(target: Element, anchorOffset: number): void {
-    const targetText = target.innerHTML.replace(/&nbsp;|\s/gi, ' ');
+    const targetText = unescape(target.innerHTML);
 
     const [word1, word2] = splitAt(anchorOffset)(targetText).map(word =>
       this.makeSpeechWord(

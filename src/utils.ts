@@ -114,9 +114,7 @@ export function stopEvent(event: Event): void {
  * @param {string} selector - selector name
  * @returns {[Element, number] | [null, number]}
  */
-export function findSelectedElement(
-  selector: string
-): {
+export function findSelectedElement(selector: string): {
   node: Element | null;
   anchorOffset: number;
   isCollapsed: boolean;
@@ -124,7 +122,7 @@ export function findSelectedElement(
   const defaultResult = {
     node: null,
     anchorOffset: 0,
-    isCollapsed: false
+    isCollapsed: false,
   };
 
   const selection = window.getSelection();
@@ -143,4 +141,45 @@ export function findSelectedElement(
     anchorOffset: selection.anchorOffset,
     isCollapsed: selection.isCollapsed,
   };
+}
+
+/**
+ * The base implementation of `_.propertyOf` without support for deep paths.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Function} Returns the new accessor function.
+ */
+function basePropertyOf(object: { [key: string]: string }) {
+  return function (key: string) {
+    return object[key];
+  };
+}
+
+const htmlUnescapes = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&nbsp;': ' ',
+};
+
+const unescapeHtmlChar = basePropertyOf(htmlUnescapes);
+const reEscapedHtml = /&(?:amp|lt|gt|quot|#39|nbsp);/g,
+  reHasEscapedHtml = RegExp(reEscapedHtml.source);
+
+/**
+ * Converts the HTML entities
+ * `&amp;`, `&lt;`, `&gt;`, `&quot;`, and `&#39;` in `string` to
+ * their corresponding characters.
+ *
+ * @param {string} html The string to unescape.
+ * @returns {string} Returns the unescaped string.
+ * @example
+ */
+export function unescape(html: string): string {
+  return html && reHasEscapedHtml.test(html)
+    ? html.replace(reEscapedHtml, unescapeHtmlChar)
+    : html;
 }
