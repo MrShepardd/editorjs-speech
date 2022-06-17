@@ -404,10 +404,10 @@ export default class Ui {
       return;
     }
 
-    const currentText = unescape(currentItem.innerHTML);
+    const currentText = unescape(currentItem?.textContent || '');
     const cursorAtEnd = anchorOffset === currentText.length;
 
-    if (!cursorAtEnd) {
+    if (currentText && !cursorAtEnd) {
       this.splitSpeechText(currentItem, anchorOffset);
       stopEvent(event);
     }
@@ -457,7 +457,7 @@ export default class Ui {
   }
 
   private splitSpeechText(target: Element, anchorOffset: number): void {
-    const targetText = unescape(target.innerHTML);
+    const targetText = unescape(target.textContent || '');
 
     const [word1, word2] = splitAt(anchorOffset)(targetText).map(word =>
       this.makeSpeechWord(
