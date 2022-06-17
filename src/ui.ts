@@ -133,7 +133,7 @@ export default class Ui {
   }
 
   listener(event: KeyboardEvent): void {
-    const [ENTER, BACKSPACE, WHITESPACE, DELETE] = [13, 8, 32, 46]; // key names
+    const [ENTER, BACKSPACE, WHITESPACE, DELETE, A] = [13, 8, 32, 46, 65]; // key names
     const cmdPressed = event.ctrlKey || event.metaKey;
 
     switch (event.keyCode) {
@@ -148,6 +148,11 @@ export default class Ui {
         break;
       case DELETE:
         this.delete(event);
+        break;
+      case A:
+        if (cmdPressed) {
+          this.selectItem(event);
+        }
         break;
       default:
         break;
@@ -451,5 +456,29 @@ export default class Ui {
       : target.innerHTML.length;
 
     setSelectionAt(word, position);
+  }
+
+  /**
+   * Select speech content by CMD+A
+   *
+   * @param {KeyboardEvent} event - KeyboardEvent on Cmd + A pressed
+   */
+  private selectItem(event: KeyboardEvent): void {
+    event.preventDefault();
+
+    const selection = window.getSelection();
+    const currentNode = selection?.anchorNode?.parentNode;
+
+    if (selection && currentNode) {
+      const currentItem = (currentNode as Element).closest('.' + this.CSS.speechContent);
+      const defaultItem = document.createElement('div');
+
+      const range = new Range();
+
+      range.setStart(currentItem?.firstChild || defaultItem, 0);
+      range.setEnd(currentItem?.lastChild || defaultItem, 1);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
   }
 }
