@@ -136,6 +136,8 @@ export default class Ui {
     const [ENTER, BACKSPACE, WHITESPACE, DELETE, A] = [13, 8, 32, 46, 65]; // key names
     const cmdPressed = event.ctrlKey || event.metaKey;
 
+    this.onKeydown(event);
+
     switch (event.keyCode) {
       case ENTER:
         this.enter(event, cmdPressed);
@@ -262,6 +264,18 @@ export default class Ui {
     };
 
     return make('span', this.CSS.speechWord, domProps, attributes);
+  }
+
+  private onKeydown(event: KeyboardEvent): void {
+    const { node, isAllTextSelected } = findSelectedElement(
+      this.CSS.speechWord
+    );
+
+    if (node && isAllTextSelected) {
+      this.clearSpeechText();
+      stopEvent(event);
+      return;
+    }
   }
 
   /**
@@ -399,6 +413,36 @@ export default class Ui {
     }
   }
 
+  /**
+   * Select speech content by CMD+A
+   *
+   * @param {KeyboardEvent} event - KeyboardEvent on Cmd + A pressed
+   */
+  private selectItem(event: KeyboardEvent): void {
+    event.preventDefault();
+
+    const selection = window.getSelection();
+    const currentNode = selection?.anchorNode?.parentNode;
+
+    if (selection && currentNode) {
+      const currentItem = (currentNode as Element).closest(
+        '.' + this.CSS.speechContent
+      );
+      const defaultItem = document.createElement('div');
+
+      const range = new Range();
+
+      const anchorNode = currentItem?.firstChild?.firstChild || defaultItem;
+      const focusNode = currentItem?.lastChild?.firstChild || defaultItem;
+
+      range.setStart(anchorNode, 1);
+      range.setEnd(focusNode, focusNode?.textContent?.length || 1);
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
   private insertBrInSpeechText(target: Element, insertAfter: boolean): void {
     const word = this.makeSpeechWord(
       '<br>',
@@ -458,27 +502,9 @@ export default class Ui {
     setSelectionAt(word, position);
   }
 
-  /**
-   * Select speech content by CMD+A
-   *
-   * @param {KeyboardEvent} event - KeyboardEvent on Cmd + A pressed
-   */
-  private selectItem(event: KeyboardEvent): void {
-    event.preventDefault();
-
-    const selection = window.getSelection();
-    const currentNode = selection?.anchorNode?.parentNode;
-
-    if (selection && currentNode) {
-      const currentItem = (currentNode as Element).closest('.' + this.CSS.speechContent);
-      const defaultItem = document.createElement('div');
-
-      const range = new Range();
-
-      range.setStart(currentItem?.firstChild || defaultItem, 0);
-      range.setEnd(currentItem?.lastChild || defaultItem, 1);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
+  private clearSpeechText(): void {
+    const word = this.makeSpeechWord('&nbsp;');
+    this.nodes.speechTag.innerHTML = '';
+    this.nodes.speechTag.appendChild(word);
   }
 }

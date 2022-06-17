@@ -118,28 +118,42 @@ export function findSelectedElement(selector: string): {
   node: Element | null;
   anchorOffset: number;
   isCollapsed: boolean;
+  isAllTextSelected: boolean;
 } {
   const defaultResult = {
     node: null,
     anchorOffset: 0,
     isCollapsed: false,
+    isAllTextSelected: false,
   };
 
   const selection = window.getSelection();
-  let currentNode = selection?.anchorNode;
+  let anchorNode = selection?.anchorNode;
+  let focusNode = selection?.focusNode;
 
-  if (!selection || !currentNode) {
+  if (!selection || !anchorNode || !focusNode) {
     return defaultResult;
   }
 
-  if (currentNode.nodeType !== Node.ELEMENT_NODE) {
-    currentNode = currentNode.parentNode;
+  if (anchorNode.nodeType !== Node.ELEMENT_NODE) {
+    anchorNode = anchorNode.parentNode;
   }
 
+  if (focusNode.nodeType !== Node.ELEMENT_NODE) {
+    focusNode = focusNode.parentNode;
+  }
+
+  const isAllTextSelected =
+    anchorNode === anchorNode?.parentNode?.firstChild &&
+    focusNode === anchorNode?.parentNode?.lastChild &&
+    selection.anchorOffset === 1 &&
+    selection.focusOffset === focusNode?.textContent?.length;
+
   return {
-    node: (currentNode as Element).closest(`.${selector}`),
+    node: (anchorNode as Element).closest(`.${selector}`),
     anchorOffset: selection.anchorOffset,
     isCollapsed: selection.isCollapsed,
+    isAllTextSelected,
   };
 }
 
@@ -167,7 +181,7 @@ const htmlUnescapes = {
 
 const unescapeHtmlChar = basePropertyOf(htmlUnescapes);
 const reEscapedHtml = /&(?:amp|lt|gt|quot|#39|nbsp);/g,
-  reHasEscapedHtml = RegExp(reEscapedHtml.source);
+    reHasEscapedHtml = RegExp(reEscapedHtml.source);
 
 /**
  * Converts the HTML entities
