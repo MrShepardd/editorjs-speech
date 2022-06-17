@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0-next.0](https://github.com/MrShepardd/editorjs-speech/compare/v1.1.8-next.2...v1.2.0-next.0) (2022-06-17)
+
+
+### Features
+
+* make empty speech word when all text removed ([6a90a4f](https://github.com/MrShepardd/editorjs-speech/commit/6a90a4f))
+* select speech content by CMD+A ([8c2691a](https://github.com/MrShepardd/editorjs-speech/commit/8c2691a))
+
+
+
 ### [1.1.8-next.2](https://github.com/MrShepardd/editorjs-speech/compare/v1.1.8-next.1...v1.1.8-next.2) (2022-06-16)
 
 
