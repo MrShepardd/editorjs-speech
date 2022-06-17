@@ -118,7 +118,7 @@ export default class Ui {
 
     for (let i = 0; i < items.length; i += 1) {
       const textItem = items[i];
-      const word = trimWord(textItem.textContent);
+      const word = trimWord(textItem.innerHTML);
 
       if (textItem && word) {
         speechText.push({
@@ -368,7 +368,7 @@ export default class Ui {
    * @param {KeyboardEvent} event - Keyboard event on delete.
    */
   private delete(event: KeyboardEvent): void {
-    const { node: currentItem, anchorOffset } = findSelectedElement(
+    const { node: currentItem, anchorOffset, isCollapsed } = findSelectedElement(
       this.CSS.speechWord
     );
 
@@ -382,7 +382,7 @@ export default class Ui {
     const isLastElement =
       Array.from(text).findIndex(n => n === currentItem) === text.length - 1;
 
-    if (cursorAtEnd && !isLastElement) {
+    if (cursorAtEnd && !isLastElement && isCollapsed) {
       this.mergeSpeechText(currentItem, false);
       stopEvent(event);
     }
@@ -394,7 +394,7 @@ export default class Ui {
    * @param {KeyboardEvent} event - Keyboard event on whitespace.
    */
   private whitespace(event: KeyboardEvent): void {
-    const { node: currentItem, anchorOffset } = findSelectedElement(
+    const { node: currentItem, anchorOffset, isCollapsed } = findSelectedElement(
       this.CSS.speechWord
     );
     if (!currentItem) {
@@ -405,7 +405,7 @@ export default class Ui {
     const currentText = unescape(currentItem.textContent);
     const cursorAtEnd = anchorOffset === currentText.length;
 
-    if (currentText && !cursorAtEnd) {
+    if (currentText && !cursorAtEnd && isCollapsed) {
       this.splitSpeechText(currentItem, anchorOffset);
       stopEvent(event);
     }
