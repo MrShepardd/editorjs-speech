@@ -508,5 +508,7 @@ export default class Ui {
     const word = this.makeSpeechWord('&nbsp;');
     this.nodes.speechTag.innerHTML = '';
     this.nodes.speechTag.appendChild(word);
+
+    setSelectionAt(word, 1);
   }
 }
