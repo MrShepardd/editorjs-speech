@@ -73,7 +73,8 @@ export function formatTimestamp(timestamp: number): string {
  * @param {boolean} trimStart - should trim space from start of word
  * @returns {string}
  */
-export function trimWord(word: string, trimStart = true): string {
+export function trimWord(word: string | null, trimStart = true): string {
+  word = word || '';
   return trimStart
     ? word.replace(/&nbsp;|\s/gi, ' ').trim()
     : word.replace(/&nbsp;|\s/gi, ' ').trimEnd();
@@ -91,11 +92,13 @@ export function setSelectionAt(element: HTMLElement, position: number): void {
   const selection = window.getSelection();
   const range = new Range();
 
-  range.setStart(element.childNodes[0], position);
-  range.collapse(true);
+  if (element.firstChild) {
+    range.setStart(element.firstChild, position);
+    range.collapse(true);
 
-  selection?.removeAllRanges();
-  selection?.addRange(range);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
 }
 
 /**
@@ -192,7 +195,8 @@ const reEscapedHtml = /&(?:amp|lt|gt|quot|#39|nbsp);/g,
  * @returns {string} Returns the unescaped string.
  * @example
  */
-export function unescape(html: string): string {
+export function unescape(html: string | null): string {
+  html = html || '';
   return html && reHasEscapedHtml.test(html)
     ? html.replace(reEscapedHtml, unescapeHtmlChar)
     : html;

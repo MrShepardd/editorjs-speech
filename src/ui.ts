@@ -118,7 +118,7 @@ export default class Ui {
 
     for (let i = 0; i < items.length; i += 1) {
       const textItem = items[i];
-      const word = trimWord(textItem.innerHTML);
+      const word = trimWord(textItem.textContent);
 
       if (textItem && word) {
         speechText.push({
@@ -325,8 +325,7 @@ export default class Ui {
       return;
     }
 
-    const cursorAtEnd =
-      anchorOffset === trimWord(currentItem.innerHTML, false).length;
+    const cursorAtEnd = anchorOffset === unescape(currentItem.textContent).length;
 
     if (cmdPressed) {
       this.getOutOfSpeech(event, currentItem, cursorAtEnd);
@@ -348,9 +347,9 @@ export default class Ui {
       anchorOffset,
       isCollapsed,
     } = findSelectedElement(this.CSS.speechWord);
+
     const text = this.nodes.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
-    const isFirstElement =
-      Array.from(text).findIndex(n => n === currentItem) < 1;
+    const isFirstElement = Array.from(text).findIndex(n => n === currentItem) < 1;
 
     if (!currentItem || text.length === 0) {
       stopEvent(event);
@@ -379,8 +378,7 @@ export default class Ui {
     }
 
     const text = this.nodes.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
-    const cursorAtEnd =
-      anchorOffset === trimWord(currentItem.innerHTML, false).length;
+    const cursorAtEnd = anchorOffset === unescape(currentItem.textContent).length;
     const isLastElement =
       Array.from(text).findIndex(n => n === currentItem) === text.length - 1;
 
@@ -404,7 +402,7 @@ export default class Ui {
       return;
     }
 
-    const currentText = unescape(currentItem?.textContent || '');
+    const currentText = unescape(currentItem.textContent);
     const cursorAtEnd = anchorOffset === currentText.length;
 
     if (currentText && !cursorAtEnd) {
@@ -457,7 +455,7 @@ export default class Ui {
   }
 
   private splitSpeechText(target: Element, anchorOffset: number): void {
-    const targetText = unescape(target.textContent || '');
+    const targetText = unescape(target.textContent);
 
     const [word1, word2] = splitAt(anchorOffset)(targetText).map(word =>
       this.makeSpeechWord(
@@ -481,12 +479,16 @@ export default class Ui {
 
     const targetIndex = Array.from(speechText).findIndex(n => n === target);
     const mergedIndex = mergePrevious ? targetIndex - 1 : targetIndex + 1;
+
     const mergedItem = speechText[mergedIndex];
+
+    const targetText = trimWord(unescape(target.textContent));
+    const mergedText = trimWord(unescape(mergedItem.textContent));
 
     const word = this.makeSpeechWord(
       mergePrevious
-        ? trimWord(mergedItem.innerHTML) + trimWord(target.innerHTML)
-        : trimWord(target.innerHTML) + trimWord(mergedItem.innerHTML),
+        ? mergedText + targetText
+        : targetText + mergedText,
       Number(target.getAttribute('data-start')),
       Number(target.getAttribute('data-end'))
     );
@@ -496,8 +498,8 @@ export default class Ui {
     target.parentElement?.removeChild(target);
 
     const position = mergePrevious
-      ? mergedItem.innerHTML.length
-      : target.innerHTML.length;
+      ? mergedText.length + 1
+      : targetText.length + 1;
 
     setSelectionAt(word, position);
   }
