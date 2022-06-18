@@ -140,11 +140,11 @@ export function findSelectedElement(selector: string): {
 
   if (anchorNode.nodeType !== Node.ELEMENT_NODE) {
     anchorNode = anchorNode.parentNode;
-  }
-
-  if (focusNode.nodeType !== Node.ELEMENT_NODE) {
     focusNode = focusNode.parentNode;
   }
+
+  anchorNode = (anchorNode as Element).closest(`.${selector}`);
+  focusNode = (focusNode as Element).closest(`.${selector}`);
 
   const isAllTextSelected =
     anchorNode === anchorNode?.parentNode?.firstChild &&
@@ -153,7 +153,7 @@ export function findSelectedElement(selector: string): {
     selection.focusOffset === focusNode?.textContent?.length;
 
   return {
-    node: (anchorNode as Element).closest(`.${selector}`),
+    node: anchorNode as Element,
     anchorOffset: selection.anchorOffset,
     isCollapsed: selection.isCollapsed,
     isAllTextSelected,
