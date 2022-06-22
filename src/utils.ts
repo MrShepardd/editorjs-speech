@@ -201,3 +201,29 @@ export function unescape(html: string | null): string {
     ? html.replace(reEscapedHtml, unescapeHtmlChar)
     : html;
 }
+
+/**
+ * @param {string} str
+ * @param {RegExp} search
+ * @returns {boolean}
+ */
+export function regexStartsWith(str: string, search: RegExp): boolean {
+  let source = search.source;
+  if (!source.startsWith('^')) source = '^' + source;
+
+  const reg = new RegExp(source);
+  return reg.test(str);
+}
+
+/**
+ * @param {string} str
+ * @param {RegExp} search
+ * @returns {boolean}
+ */
+export function regexEndsWith(str: string, search: RegExp): boolean {
+  let source = search.source;
+  if (!source.endsWith('$')) source = source + '$';
+
+  const reg = new RegExp(source);
+  return reg.test(str);
+}

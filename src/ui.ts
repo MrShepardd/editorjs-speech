@@ -4,9 +4,9 @@ import {
   trimWord,
   stopEvent,
   findSelectedElement,
-  splitAt,
-  setSelectionAt,
   unescape,
+  regexStartsWith,
+  regexEndsWith,
 } from './utils';
 import { API } from '@editorjs/editorjs';
 import { SpeechData, TextData } from '../types';
@@ -110,55 +110,12 @@ export default class Ui {
    * @returns {TextData}
    */
   get speechText(): TextData[] {
-    const speechText: TextData[] = [];
+    const items = this.nodes.speechTag.childNodes;
 
-    const items = this.nodes.wrapper.querySelectorAll(
-      `.${this.CSS.speechWord}`
-    );
-
-    for (let i = 0; i < items.length; i += 1) {
-      const textItem = items[i];
-      const word = trimWord(textItem.innerHTML);
-
-      if (textItem && word) {
-        speechText.push({
-          word,
-          start: parseFloat(textItem.getAttribute('data-start') || ''),
-          end: parseFloat(textItem.getAttribute('data-end') || ''),
-        });
-      }
-    }
-
-    return speechText;
-  }
-
-  listener(event: KeyboardEvent): void {
-    const [ENTER, BACKSPACE, WHITESPACE, DELETE, A] = [13, 8, 32, 46, 65]; // key names
-    const cmdPressed = event.ctrlKey || event.metaKey;
-
-    this.onKeydown(event);
-
-    switch (event.keyCode) {
-      case ENTER:
-        this.enter(event, cmdPressed);
-        break;
-      case BACKSPACE:
-        this.backspace(event);
-        break;
-      case WHITESPACE:
-        this.whitespace(event);
-        break;
-      case DELETE:
-        this.delete(event);
-        break;
-      case A:
-        if (cmdPressed) {
-          this.selectItem(event);
-        }
-        break;
-      default:
-        break;
-    }
+    return Array.from(items)
+      .reduce(this.preprocessSpeechNodes.bind(this), [])
+      .filter(this.filterSpeechNode)
+      .map(this.convertNodeToSpeech);
   }
 
   /**
@@ -249,33 +206,27 @@ export default class Ui {
    * @param {string} word - text content
    * @param {number} start - start timestamp for word
    * @param {number} end - end timestamp for word
+   * @param {boolean} addWhitespace - is need to add whitespace in word start
    * @returns {HTMLElement}
    */
-  private makeSpeechWord(word: string, start = 0, end = 0): HTMLElement {
+  private makeSpeechWord(
+    word: string,
+    start = 0,
+    end = 0,
+    addWhitespace = true
+  ): HTMLElement {
     if (!start || !end) {
       start = this.data.timestamp;
       end = this.data.timestamp;
     }
 
-    const domProps = { innerHTML: ` ${word}` };
+    const domProps = { innerHTML: addWhitespace ? ` ${word}` : word };
     const attributes = {
       'data-start': start.toString(),
       'data-end': end.toString(),
     };
 
     return make('span', this.CSS.speechWord, domProps, attributes);
-  }
-
-  private onKeydown(event: KeyboardEvent): void {
-    const { node, isAllTextSelected } = findSelectedElement(
-      this.CSS.speechWord
-    );
-
-    if (node && isAllTextSelected) {
-      this.clearSpeechText();
-      stopEvent(event);
-      return;
-    }
   }
 
   /**
@@ -325,7 +276,8 @@ export default class Ui {
       return;
     }
 
-    const cursorAtEnd = anchorOffset === unescape(currentItem.textContent).length;
+    const cursorAtEnd =
+      anchorOffset === unescape(currentItem.textContent).length;
 
     if (cmdPressed) {
       this.getOutOfSpeech(event, currentItem, cursorAtEnd);
@@ -334,81 +286,6 @@ export default class Ui {
 
     this.insertBrInSpeechText(currentItem, cursorAtEnd);
     stopEvent(event);
-  }
-
-  /**
-   * Handle backspace
-   *
-   * @param {KeyboardEvent} event - Keyboard event on backspace.
-   */
-  private backspace(event: KeyboardEvent): void {
-    const {
-      node: currentItem,
-      anchorOffset,
-      isCollapsed,
-    } = findSelectedElement(this.CSS.speechWord);
-
-    const text = this.nodes.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
-    const isFirstElement = Array.from(text).findIndex(n => n === currentItem) < 1;
-
-    if (!currentItem || text.length === 0) {
-      stopEvent(event);
-      return;
-    }
-
-    if (anchorOffset === 1 && !isFirstElement && isCollapsed) {
-      this.mergeSpeechText(currentItem, true);
-      stopEvent(event);
-    }
-  }
-
-  /**
-   * Handle delete
-   *
-   * @param {KeyboardEvent} event - Keyboard event on delete.
-   */
-  private delete(event: KeyboardEvent): void {
-    const { node: currentItem, anchorOffset, isCollapsed } = findSelectedElement(
-      this.CSS.speechWord
-    );
-
-    if (!currentItem) {
-      stopEvent(event);
-      return;
-    }
-
-    const text = this.nodes.wrapper.querySelectorAll(`.${this.CSS.speechWord}`);
-    const cursorAtEnd = anchorOffset === unescape(currentItem.textContent).length;
-    const isLastElement =
-      Array.from(text).findIndex(n => n === currentItem) === text.length - 1;
-
-    if (cursorAtEnd && !isLastElement && isCollapsed) {
-      this.mergeSpeechText(currentItem, false);
-      stopEvent(event);
-    }
-  }
-
-  /**
-   * Handle whitespace
-   *
-   * @param {KeyboardEvent} event - Keyboard event on whitespace.
-   */
-  private whitespace(event: KeyboardEvent): void {
-    const { node: currentItem, anchorOffset, isCollapsed } = findSelectedElement(
-      this.CSS.speechWord
-    );
-    if (!currentItem) {
-      stopEvent(event);
-      return;
-    }
-
-    const currentText = unescape(currentItem.textContent);
-    const cursorAtEnd = anchorOffset === currentText.length;
-
-    if (currentText && !cursorAtEnd && isCollapsed) {
-      this.splitSpeechText(currentItem, anchorOffset);
-      stopEvent(event);
-    }
   }
 
   /**
@@ -454,61 +331,94 @@ export default class Ui {
     );
   }
 
-  private splitSpeechText(target: Element, anchorOffset: number): void {
-    const targetText = unescape(target.textContent);
+  private splitSpeechText(
+    target: Element,
+    separator = /(?<=.)\s+(?=.)/
+  ): Element[] {
+    const targetText = unescape(target.textContent).replace(/\s+/g, ' ');
 
-    const [word1, word2] = splitAt(anchorOffset)(targetText).map(word =>
-      this.makeSpeechWord(
-        word,
-        Number(target.getAttribute('data-start')),
-        Number(target.getAttribute('data-end'))
-      )
-    );
-
-    target.parentElement?.insertBefore(word1, target);
-    target.parentElement?.insertBefore(word2, target);
-    target.parentElement?.removeChild(target);
-
-    setSelectionAt(word2, 1);
+    return targetText
+      .split(separator)
+      .filter(word => word.length)
+      .map(word =>
+        this.makeSpeechWord(
+          word,
+          Number(target.getAttribute('data-start')),
+          Number(target.getAttribute('data-end')),
+          false
+        )
+      );
   }
 
-  private mergeSpeechText(target: Element, mergePrevious: boolean): void {
-    const speechText = this.nodes.wrapper.querySelectorAll(
-      `.${this.CSS.speechWord}`
+  private mergeSpeechText(targetWord: Element, mergedWord: Element): Element {
+    const targetText = trimWord(unescape(targetWord.textContent));
+    const mergedText = trimWord(unescape(mergedWord.textContent));
+
+    return this.makeSpeechWord(
+      targetText + mergedText,
+      Number(targetWord.getAttribute('data-start')),
+      Number(targetWord.getAttribute('data-end'))
     );
-
-    const targetIndex = Array.from(speechText).findIndex(n => n === target);
-    const mergedIndex = mergePrevious ? targetIndex - 1 : targetIndex + 1;
-
-    const mergedItem = speechText[mergedIndex];
-
-    const targetText = trimWord(unescape(target.textContent));
-    const mergedText = trimWord(unescape(mergedItem.textContent));
-
-    const word = this.makeSpeechWord(
-      mergePrevious
-        ? mergedText + targetText
-        : targetText + mergedText,
-      Number(target.getAttribute('data-start')),
-      Number(target.getAttribute('data-end'))
-    );
-
-    target.parentElement?.insertBefore(word, target);
-    target.parentElement?.removeChild(mergedItem);
-    target.parentElement?.removeChild(target);
-
-    const position = mergePrevious
-      ? mergedText.length + 1
-      : targetText.length + 1;
-
-    setSelectionAt(word, position);
   }
 
-  private clearSpeechText(): void {
-    const word = this.makeSpeechWord('&nbsp;');
-    this.nodes.speechTag.innerHTML = '';
-    this.nodes.speechTag.appendChild(word);
+  private preprocessSpeechNodes(
+    accumulator: Element[],
+    currentItem: ChildNode
+  ): Element[] {
+    const prevItem = accumulator.at(-1);
 
-    setSelectionAt(word, 1);
+    const hasStartWhitespace = regexStartsWith(
+      currentItem.textContent || '',
+      /\s/
+    );
+    const hasEndWhiteSpace = regexEndsWith(prevItem?.textContent || '', /\s/);
+
+    const needMerge = prevItem && !hasStartWhitespace && !hasEndWhiteSpace;
+
+    this.splitSpeechText(currentItem as Element).forEach((word, index) => {
+      if (index === 0 && needMerge) {
+        const mergedWord = prevItem
+          ? this.mergeSpeechText(prevItem, word)
+          : word;
+
+        accumulator.splice(-1, 1, mergedWord);
+      } else {
+        accumulator.push(word);
+      }
+    });
+
+    return accumulator;
+  }
+
+  private filterSpeechNode(item: Element): boolean {
+    return item && !!trimWord(item.innerHTML);
+  }
+
+  private convertNodeToSpeech(item: Element): TextData {
+    const word = trimWord(item.innerHTML);
+
+    return {
+      word,
+      start: parseFloat(item.getAttribute('data-start') || ''),
+      end: parseFloat(item.getAttribute('data-end') || ''),
+    };
+  }
+
+  private listener(event: KeyboardEvent): void {
+    const [ENTER, A] = [13, 65]; // key names
+    const cmdPressed = event.ctrlKey || event.metaKey;
+
+    switch (event.keyCode) {
+      case ENTER:
+        this.enter(event, cmdPressed);
+        break;
+      case A:
+        if (cmdPressed) {
+          this.selectItem(event);
+        }
+        break;
+      default:
+        break;
+    }
   }
 }
