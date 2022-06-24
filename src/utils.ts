@@ -80,27 +80,6 @@ export function trimWord(word: string | null, trimStart = true): string {
     : word.replace(/&nbsp;|\s/gi, ' ').trimEnd();
 }
 
-export const splitAt = (index: number) => (x: string) =>
-  [x.slice(0, index), x.slice(index)];
-
-/**
- * Sets cursor to the end of element's content
- *
- * @param element - element to set selection in
- */
-export function setSelectionAt(element: HTMLElement, position: number): void {
-  const selection = window.getSelection();
-  const range = new Range();
-
-  if (element.firstChild) {
-    range.setStart(element.firstChild, position);
-    range.collapse(true);
-
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  }
-}
-
 /**
  * Stop event propagation:
  *

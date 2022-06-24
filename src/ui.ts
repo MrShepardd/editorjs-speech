@@ -115,7 +115,7 @@ export default class Ui {
     return Array.from(items)
       .reduce(this.preprocessSpeechNodes.bind(this), [])
       .filter(this.filterSpeechNode)
-      .map(this.convertNodeToSpeech);
+      .map(this.convertNodeToSpeechText);
   }
 
   /**
@@ -288,36 +288,6 @@ export default class Ui {
     stopEvent(event);
   }
 
-  /**
-   * Select speech content by CMD+A
-   *
-   * @param {KeyboardEvent} event - KeyboardEvent on Cmd + A pressed
-   */
-  private selectItem(event: KeyboardEvent): void {
-    event.preventDefault();
-
-    const selection = window.getSelection();
-    const currentNode = selection?.anchorNode?.parentNode;
-
-    if (selection && currentNode) {
-      const currentItem = (currentNode as Element).closest(
-        '.' + this.CSS.speechContent
-      );
-      const defaultItem = document.createElement('div');
-
-      const range = new Range();
-
-      const anchorNode = currentItem?.firstChild?.firstChild || defaultItem;
-      const focusNode = currentItem?.lastChild?.firstChild || defaultItem;
-
-      range.setStart(anchorNode, 1);
-      range.setEnd(focusNode, focusNode?.textContent?.length || 1);
-
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
-  }
-
   private insertBrInSpeechText(target: Element, insertAfter: boolean): void {
     const word = this.makeSpeechWord(
       '<br>',
@@ -367,20 +337,14 @@ export default class Ui {
   ): Element[] {
     const prevItem = accumulator.at(-1);
 
-    const hasStartWhitespace = regexStartsWith(
-      currentItem.textContent || '',
-      /\s/
-    );
-    const hasEndWhiteSpace = regexEndsWith(prevItem?.textContent || '', /\s/);
+    const hasStartSpace = regexStartsWith(currentItem.textContent || '', /\s/);
+    const hasEndSpace = regexEndsWith(prevItem?.textContent || '', /\s/);
 
-    const needMerge = prevItem && !hasStartWhitespace && !hasEndWhiteSpace;
+    const needMerge = !hasStartSpace && !hasEndSpace;
 
     this.splitSpeechText(currentItem as Element).forEach((word, index) => {
-      if (index === 0 && needMerge) {
-        const mergedWord = prevItem
-          ? this.mergeSpeechText(prevItem, word)
-          : word;
-
+      if (prevItem && needMerge && index === 0) {
+        const mergedWord = this.mergeSpeechText(prevItem, word);
         accumulator.splice(-1, 1, mergedWord);
       } else {
         accumulator.push(word);
@@ -394,7 +358,7 @@ export default class Ui {
     return item && !!trimWord(item.innerHTML);
   }
 
-  private convertNodeToSpeech(item: Element): TextData {
+  private convertNodeToSpeechText(item: Element): TextData {
     const word = trimWord(item.innerHTML);
 
     return {
@@ -405,17 +369,12 @@ export default class Ui {
   }
 
   private listener(event: KeyboardEvent): void {
-    const [ENTER, A] = [13, 65]; // key names
+    const [ENTER] = [13]; // key names
     const cmdPressed = event.ctrlKey || event.metaKey;
 
     switch (event.keyCode) {
       case ENTER:
         this.enter(event, cmdPressed);
-        break;
-      case A:
-        if (cmdPressed) {
-          this.selectItem(event);
-        }
         break;
       default:
         break;
