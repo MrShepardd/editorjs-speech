@@ -1,6 +1,6 @@
 import { make } from './utils';
 import { API } from '@editorjs/editorjs';
-import { SpeechData, SpeechToolConfig } from '../types';
+import { SpeechData, SpeakerData, SpeechToolConfig } from '../types';
 
 /**
  *
@@ -50,7 +50,7 @@ export default class Popover {
    *
    * @private
    */
-  private readonly onEditSpeaker!: (speaker: string) => void;
+  private readonly onEditSpeaker!: (speaker: SpeakerData) => void;
 
   /**
    * @param onEditSpeaker - callback
@@ -58,7 +58,7 @@ export default class Popover {
    * @param config - tool's config
    */
   constructor(
-    onEditSpeaker: (speaker: string) => void,
+    onEditSpeaker: (speaker: SpeakerData) => void,
     api: API,
     config: SpeechToolConfig
   ) {
@@ -104,8 +104,8 @@ export default class Popover {
     document.addEventListener('click', this.onClickOutside, true);
 
     this.speakerList.forEach(element => {
-      const speakerName = element.children[1].getAttribute('data-speaker-name');
-      if (speakerName === toolData.speaker) {
+      const speakerId = element.children[1].getAttribute('data-speaker-id');
+      if (speakerId === toolData.speaker.id.toString()) {
         element.classList.add(this.CSS.speakerSelected);
       }
       element.addEventListener('click', this.onClickSpeaker, true);
@@ -152,13 +152,16 @@ export default class Popover {
         'div',
         this.CSS.speakerName,
         {},
-        { 'data-speaker-name': speaker }
+        {
+          'data-speaker-name': speaker.name,
+          'data-speaker-id': speaker.id.toString(),
+        }
       );
       const speakerIcon = make<HTMLImageElement>(
         'div',
         this.CSS.speakerIcon,
         {},
-        { 'data-speaker-icon': '' }
+        { 'data-speaker-icon': speaker.icon || '' }
       );
 
       button.append(speakerIcon);
@@ -201,8 +204,13 @@ export default class Popover {
     const target = e.target as HTMLElement;
 
     if (!this.readOnly && target.parentElement) {
-      const speaker =
-        target.parentElement.children[1].getAttribute('data-speaker-name');
+      const speakerId = Number(
+        target.parentElement.children[1].getAttribute('data-speaker-id')
+      );
+      const speaker = this.config.speakerList?.find(
+        item => item.id === speakerId
+      );
+
       if (speaker) {
         this.onEditSpeaker(speaker);
 

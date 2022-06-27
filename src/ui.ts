@@ -8,7 +8,7 @@ import {
   setSelectionAt,
 } from './utils';
 import { API } from '@editorjs/editorjs';
-import { SpeechData, SpeechToolConfig, TextData } from '../types';
+import { SpeakerData, SpeechData, SpeechToolConfig, TextData } from '../types';
 import Popover from './popover';
 
 /**
@@ -66,7 +66,7 @@ export default class Ui {
     api: API;
     config: SpeechToolConfig;
     onSplitSpeech: (blockIndex: number) => void;
-    onEditSpeaker: (speaker: string) => void;
+    onEditSpeaker: (speaker: SpeakerData) => void;
     readOnly: boolean;
   }) {
     this.api = api;
@@ -220,7 +220,7 @@ export default class Ui {
         this.CSS.timestampContent,
         {},
         {
-          'data-speaker': this.data.speaker,
+          'data-speaker': this.data.speaker.name,
           'data-timestamp': formatTimestamp(this.data.timestamp),
         }
       )

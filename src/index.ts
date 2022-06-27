@@ -4,7 +4,7 @@
 require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
-import { SpeechData, SpeechToolConfig } from '../types';
+import {SpeakerData, SpeechData, SpeechToolConfig} from '../types';
 import Ui from './ui';
 
 /**
@@ -32,7 +32,7 @@ export default class Speech implements BlockTool {
       id: Number.NaN,
       timestamp: 0.0,
       wasSplit: false,
-      speaker: 'Unknown Speaker',
+      speaker: { id: -1, name: 'Unknown Speaker', icon: null },
       text: [],
     };
   }
@@ -125,7 +125,7 @@ export default class Speech implements BlockTool {
       onSplitSpeech: blockIndex => {
         this.onSplitSpeech(blockIndex);
       },
-      onEditSpeaker: (speaker: string) => {
+      onEditSpeaker: (speaker: SpeakerData) => {
         this._data.speaker = speaker;
         const newNode = this.ui.render(this._data);
         this.ui.replaceSpeechNode(newNode);
