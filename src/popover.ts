@@ -80,11 +80,13 @@ export default class Popover {
   get CSS(): { [key: string]: string } {
     return {
       popover: 'popover',
+      speakerTitle: 'speaker__title',
       speakersWrapper: 'speakers__wrapper',
       speakerItem: 'speaker__item',
       speakerName: 'speaker__name',
       speakerIcon: 'speaker__icon',
       speakerSelected: 'speaker__selected',
+      speakerNotFound: 'speaker__not_found',
       popoverOpened: 'popover--opened',
       popoverButtons: 'popover__buttons',
       popoverButton: 'popover__button',
@@ -139,6 +141,8 @@ export default class Popover {
    * @private
    */
   private makeUI(): void {
+    this.node.append(make('div', this.CSS.speakerTitle));
+
     const speakersWrapper = make('div', this.CSS.speakersWrapper);
 
     const speakers = this.config.speakerList || [];
@@ -162,6 +166,10 @@ export default class Popover {
       return button;
     });
     this.speakerList.forEach(element => speakersWrapper.append(element));
+
+    if (!this.speakerList.length) {
+      speakersWrapper.append(make('div', this.CSS.speakerNotFound));
+    }
 
     this.node.append(speakersWrapper);
 
@@ -193,7 +201,8 @@ export default class Popover {
     const target = e.target as HTMLElement;
 
     if (!this.readOnly && target.parentElement) {
-      const speaker = target.parentElement.children[1].getAttribute('data-speaker-name');
+      const speaker =
+        target.parentElement.children[1].getAttribute('data-speaker-name');
       if (speaker) {
         this.onEditSpeaker(speaker);
 
