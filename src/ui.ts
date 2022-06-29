@@ -303,7 +303,7 @@ export default class Ui {
 
   private splitSpeechText(
     target: Element,
-    separator = /(?<=.)\s+(?=.)/
+    separator = /(?!^)\s+(?!$)/
   ): Element[] {
     const targetText = unescape(target.textContent).replace(/\s+/g, ' ');
 
