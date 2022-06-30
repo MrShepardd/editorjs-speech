@@ -104,8 +104,8 @@ export default class Popover {
     document.addEventListener('click', this.onClickOutside, true);
 
     this.speakerList.forEach(element => {
-      const speakerId = element.children[1].getAttribute('data-speaker-id');
-      if (speakerId === toolData.speaker.id.toString()) {
+      const speaker = this.parseSpeakerFromElement(element);
+      if (speaker && speaker.id === toolData.speaker.id) {
         element.classList.add(this.CSS.speakerSelected);
       }
       element.addEventListener('click', this.onClickSpeaker, true);
@@ -147,15 +147,17 @@ export default class Popover {
 
     const speakers = this.config.speakerList || [];
     this.speakerList = speakers.map(speaker => {
-      const button = make<HTMLButtonElement>('div', this.CSS.speakerItem);
+      const button = make<HTMLButtonElement>(
+        'div',
+        this.CSS.speakerItem,
+        {},
+        { 'data-speaker': JSON.stringify(speaker) }
+      );
       const speakerName = make(
         'div',
         this.CSS.speakerName,
         {},
-        {
-          'data-speaker-name': speaker.name,
-          'data-speaker-id': speaker.id.toString(),
-        }
+        { 'data-speaker-name': speaker.name }
       );
       const speakerIcon = make<HTMLImageElement>(
         'div',
@@ -202,14 +204,10 @@ export default class Popover {
 
   private onClickSpeaker(e: MouseEvent): void {
     const target = e.target as HTMLElement;
+    const speakerItem = target.closest('.speaker__item');
 
-    if (!this.readOnly && target.parentElement) {
-      const speakerId = Number(
-        target.parentElement.children[1].getAttribute('data-speaker-id')
-      );
-      const speaker = this.config.speakerList?.find(
-        item => item.id === speakerId
-      );
+    if (!this.readOnly && speakerItem) {
+      const speaker = this.parseSpeakerFromElement(speakerItem);
 
       if (speaker) {
         this.onEditSpeaker(speaker);
@@ -217,6 +215,19 @@ export default class Popover {
         this.lastSpeech = null;
         this.close();
       }
+    }
+  }
+
+  private parseSpeakerFromElement(element: Element): SpeakerData | undefined {
+    try {
+      const speakerData = element.getAttribute('data-speaker');
+      const parsedSpeaker: SpeakerData = JSON.parse(speakerData || '{}');
+
+      return this.config.speakerList?.find(
+        item => item.id === parsedSpeaker.id
+      );
+    } catch (err) {
+      console.log(err);
     }
   }
 }
