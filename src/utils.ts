@@ -136,3 +136,39 @@ export function findSelectedElement(
     ] || [null, 0]
   );
 }
+
+/**
+ * @description Converts a string variable to hex code.
+ * @param {String} str
+ * @note Used from ChakraUI
+ * @returns {String}
+ */
+export function string2Hex (str: string): string {
+  let hash = 0;
+  if (str.length === 0) return '';
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    hash = hash & hash;
+  }
+  let color = '#';
+  for (let j = 0; j < 3; j++) {
+    const value = (hash >> (j * 8)) & 255;
+    color += ('00' + value.toString(16)).substr(-2);
+  }
+  return color;
+}
+
+/**
+ * @description Generate Avatar initials from name string
+ * @param {String} name
+ * @returns {String} Avatar Initials
+ */
+export function getInitials(name: string): string {
+  const [firstName, lastName] = name.split(' ');
+
+  if (firstName && lastName) {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`;
+  } else {
+    return firstName.charAt(0);
+  }
+}

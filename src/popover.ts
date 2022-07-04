@@ -1,4 +1,4 @@
-import { make } from './utils';
+import { make, string2Hex, getInitials } from './utils';
 import { API } from '@editorjs/editorjs';
 import { SpeechData, SpeakerData, SpeechToolConfig } from '../types';
 
@@ -163,8 +163,12 @@ export default class Popover {
         'div',
         this.CSS.speakerIcon,
         {},
-        { 'data-speaker-icon': speaker.icon || '' }
+        {
+          'data-speaker-icon': speaker.icon || '',
+          'data-speaker-initials': speaker.name && getInitials(speaker.name)
+        }
       );
+      speakerIcon.style.background = speaker.name ? string2Hex(speaker.name) : '#608076';
 
       button.append(speakerIcon);
       button.append(speakerName);
