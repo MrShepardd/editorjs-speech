@@ -144,6 +144,10 @@ p {
   top: 12px;
   left: 55px;
   font-size: 1rem;
+  font-weight: 400;
+}
+
+.speaker__selected .speaker__name::before {
   font-weight: 600;
 }
 
