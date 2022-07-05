@@ -4,7 +4,7 @@
 require('./index.css').toString();
 
 import { API, BlockTool } from '@editorjs/editorjs';
-import { SpeechData } from '../types';
+import { SpeakerData, SpeechData, SpeechToolConfig } from '../types';
 import Ui from './ui';
 
 /**
@@ -32,7 +32,7 @@ export default class Speech implements BlockTool {
       id: Number.NaN,
       timestamp: 0.0,
       wasSplit: false,
-      speaker: 'Unknown Speaker',
+      speaker: { id: 0, name: 'Unknown Speaker', icon: null },
       text: [],
     };
   }
@@ -70,6 +70,13 @@ export default class Speech implements BlockTool {
   private readonly api: API;
 
   /**
+   * Tool's config
+   *
+   * @private
+   */
+  private config: SpeechToolConfig;
+
+  /**
    * Data passed on render
    */
   private readonly _data: SpeechData;
@@ -91,19 +98,23 @@ export default class Speech implements BlockTool {
    *
    * @param {object} params - tool constructor options
    * @param {SpeechData} params.data - data passed on render
+   * @param {SpeechToolConfig} params.config - user config for Tool
    * @param {API} params.api - Editor.js API
    * @param {boolean} params.readOnly - Readonly property
    */
   constructor({
     data,
+    config,
     api,
     readOnly,
   }: {
     data?: SpeechData;
+    config: SpeechToolConfig;
     api: API;
     readOnly?: boolean;
   }) {
     this.api = api;
+    this.config = config;
     this.readOnly = readOnly || false;
 
     /**
@@ -114,7 +125,13 @@ export default class Speech implements BlockTool {
       onSplitSpeech: blockIndex => {
         this.onSplitSpeech(blockIndex);
       },
+      onEditSpeaker: (speaker: SpeakerData) => {
+        this._data.speaker = speaker;
+        const newNode = this.ui.render(this._data);
+        this.ui.replaceSpeechNode(newNode);
+      },
       readOnly: this.readOnly,
+      config: this.config,
     });
 
     this._data = Speech.DEFAULT_SPEECH;

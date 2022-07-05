@@ -15,6 +15,8 @@ p {
   display: flex;
   flex-flow: row nowrap;
   margin-right: 1rem;
+  cursor: pointer;
+  padding-right: 30px;
 }
 
 .speech-timestamp-content {
@@ -35,6 +37,12 @@ p {
 
 .speech-timestamp-content::after {
   content: attr(data-timestamp);
+}
+
+.speech-timestamp:hover::after {
+  content: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 18 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.75 13.4375V16.25H5.5625L13.8575 7.955L11.045 5.1425L2.75 13.4375ZM16.0325 5.78C16.102 5.71062 16.1572 5.6282 16.1948 5.53747C16.2325 5.44674 16.2518 5.34948 16.2518 5.25125C16.2518 5.15303 16.2325 5.05576 16.1948 4.96503C16.1572 4.8743 16.102 4.79189 16.0325 4.7225L14.2775 2.9675C14.2081 2.89797 14.1257 2.84281 14.035 2.80518C13.9442 2.76754 13.847 2.74817 13.7488 2.74817C13.6505 2.74817 13.5533 2.76754 13.4625 2.80518C13.3718 2.84281 13.2894 2.89797 13.22 2.9675L11.8475 4.34L14.66 7.1525L16.0325 5.78V5.78Z' fill='%232a5885'/%3E%3C/svg%3E%0A");
+  position: absolute;
+  right: 0;
 }
 
 .speech-content {

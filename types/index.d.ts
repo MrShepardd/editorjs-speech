@@ -14,7 +14,7 @@ export interface SpeechData {
     /**
      * Speaker name
      */
-    speaker: string;
+    speaker: SpeakerData;
 
     /**
      * Timestamp of speech
@@ -30,6 +30,26 @@ export interface SpeechData {
      * Note's superscript index
      */
     text: TextData[];
+}
+
+export interface SpeakerData {
+    /**
+     * Identifier of the speaker
+     */
+    id: number
+    /**
+     * Speaker's name
+     */
+    name: string;
+
+    /**
+     * Speaker's icon
+     */
+    icon: string | null;
+}
+
+export interface SpeechToolConfig {
+    speakerList?: SpeakerData[];
 }
 
 declare class Speech implements BlockTool {
