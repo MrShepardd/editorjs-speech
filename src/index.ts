@@ -32,7 +32,7 @@ export default class Speech implements BlockTool {
       id: Number.NaN,
       timestamp: 0.0,
       wasSplit: false,
-      speaker: { id: -1, name: 'Unknown Speaker', icon: null },
+      speaker: { id: 0, name: 'Unknown Speaker', icon: null },
       text: [],
     };
   }
