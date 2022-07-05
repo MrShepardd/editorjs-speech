@@ -1,3 +1,5 @@
+import Color from 'color';
+
 /**
  * Helper for making Elements with attributes
  *
@@ -172,3 +174,9 @@ export function getInitials(name: string): string {
     return firstName.charAt(0);
   }
 }
+
+/**
+ * @description Determines whether the provided color is dark or not.
+ * @param {String} color
+ */
+export const isDarkColor = (color: string): boolean => Color(color).isDark();

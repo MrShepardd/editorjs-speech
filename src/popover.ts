@@ -1,4 +1,4 @@
-import { make, string2Hex, getInitials } from './utils';
+import { make, string2Hex, getInitials, isDarkColor } from './utils';
 import { API } from '@editorjs/editorjs';
 import { SpeechData, SpeakerData, SpeechToolConfig } from '../types';
 
@@ -168,7 +168,11 @@ export default class Popover {
           'data-speaker-initials': speaker.name && getInitials(speaker.name)
         }
       );
-      speakerIcon.style.background = speaker.name ? string2Hex(speaker.name) : '#608076';
+      const bg = speaker.name ? string2Hex(speaker.name) : '#608076';
+      const color = speaker.name ? (isDarkColor(bg) ? '#fff' : '#161616') : '#fff';
+
+      speakerIcon.style.background = bg;
+      speakerIcon.style.color = color;
 
       button.append(speakerIcon);
       button.append(speakerName);
