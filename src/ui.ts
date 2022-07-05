@@ -34,7 +34,7 @@ export default class Ui {
    *
    * @private
    */
-  private readonly onSplitSpeech!: (blockIndex: number) => void;
+  private readonly onSplitSpeech!: (speechText: TextData[], blockIndex: number) => void;
 
   /**
    * Wrapper for tools' content
@@ -66,7 +66,7 @@ export default class Ui {
   }: {
     api: API;
     config: SpeechToolConfig;
-    onSplitSpeech: (blockIndex: number) => void;
+    onSplitSpeech: (speechText: TextData[], blockIndex: number) => void;
     onEditSpeaker: (speaker: SpeakerData) => void;
     readOnly: boolean;
   }) {
@@ -273,7 +273,7 @@ export default class Ui {
       node => node === searchedItem
     );
 
-    this.onSplitSpeech(currentIndex);
+    this.onSplitSpeech(this.data.text, currentIndex);
     stopEvent(event);
   }
 
